@@ -9,4 +9,9 @@ import { RouterOutlet } from '@angular/router';
 })
 export class App {
   protected readonly title = signal('forge-ton-histoire-web');
+
+  constructor() {
+    let message: string = "Hello, TypeScript!";
+    console.log(message);
+  }
 }
