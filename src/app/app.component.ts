@@ -1,43 +1,71 @@
 import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
-    <div style="max-width:800px;margin:50px auto;padding:20px;font-family:Arial;">
-      <h1 style="color:#2c3e50;">Assistant de Cohérence Narrative</h1>
+    <h1>Assistant de Coherence Narrative</h1>
+    
+    <div>
+      <button (click)="creerHistoire()">Creer une histoire</button>
+      <button (click)="reprendreHistoire()">Reprendre une histoire</button>
+      <button (click)="chargerPersonnages()">Voir les personnages</button>
+      <button (click)="chargerLivres()">Voir les livres</button>
+      <button (click)="testerConnexion()">Tester connexion</button>
+    </div>
+
+    <div *ngIf="message()">
+      {{ message() }}
+    </div>
+
+    <div *ngIf="showForm()">
+      <h2>Ajouter une histoire</h2>
       
-      <!-- Boutons -->
-      <div style="display:flex;flex-direction:column;gap:15px;margin:30px 0;">
-        <button (click)="creerHistoire()" style="padding:15px;background:#2ecc71;color:white;border:none;border-radius:8px;font-size:18px;cursor:pointer;">
-           Créer une histoire
-        </button>
-        <div style="display:flex;flex-direction:column;gap:15px;margin:30px 0;">
-        <button (click)="reprendreHistoire()" style="padding:15px;background:#2ecc71;color:white;border:none;border-radius:8px;font-size:18px;cursor:pointer;">
-           Reprendre une histoire
-        </button>
-        
-        <button (click)="chargerPersonnages()" style="padding:15px;background:#3498db;color:white;border:none;border-radius:8px;font-size:18px;cursor:pointer;">
-           Voir les personnages
-        </button>
-
+      <div>
+        <label>Titre *</label>
+        <input 
+          [(ngModel)]="nouvelleHistoire.nom"
+          placeholder="Titre de l'histoire">
       </div>
-
-      <!-- Message -->
-      <div *ngIf="message()" style="padding:15px;background:#ecf0f1;border-radius:8px;margin:10px 0;">
-        {{ message() }}
+      
+      <div>
+        <label>Type</label>
+        <input 
+          [(ngModel)]="nouvelleHistoire.type"
+          placeholder="Ex: Roman, Fantastique">
       </div>
+      
+      <div>
+        <label>Description</label>
+        <textarea 
+          [(ngModel)]="nouvelleHistoire.description"
+          placeholder="Description"
+          rows="3"></textarea>
+      </div>
+      
+      <button (click)="ajouterHistoire()">Ajouter</button>
+      <button (click)="annulerAjout()">Annuler</button>
+    </div>
 
-      <!-- Liste des personnages -->
-      <div *ngIf="personnages().length > 0" style="margin-top:20px;">
-        <h2 style="color:#2c3e50;"> Personnages</h2>
-        <div *ngFor="let p of personnages()" >
-          <strong>{{ p.prenom }} {{ p.nom }}</strong>
-          <span style="color:#7f8c8d;margin-left:10px;">{{ p.description }}</span>
-        </div>
+    <div *ngIf="personnages().length > 0">
+      <h2>Personnages</h2>
+      <div *ngFor="let p of personnages()">
+        <strong>{{ p.prenom }} {{ p.nom }}</strong>
+        <span>{{ p.description }}</span>
+      </div>
+    </div>
+
+    <div *ngIf="livres().length > 0">
+      <h2>Livres</h2>
+      <div *ngFor="let livre of livres()">
+        <strong>{{ livre.nom }}</strong>
+        <span>{{ livre.type }}</span>
+        <br>
+        <span>{{ livre.description }}</span>
       </div>
     </div>
   `
@@ -45,38 +73,96 @@ import { HttpClient } from '@angular/common/http';
 export class App {
   message = signal('');
   personnages = signal<any[]>([]);
+  livres = signal<any[]>([]);
+  showForm = signal(false);
   
+  nouvelleHistoire = {
+    nom: '',
+    type: 'Histoire',
+    description: ''
+  };
+
   private http = inject(HttpClient);
 
-  constructor() {}
+  constructor() {
+    this.chargerLivres();
+  }
 
   creerHistoire() {
-    this.message.set('Créer une nouvelle histoire');
+    this.showForm.set(true);
+    this.message.set('Formulaire ajout histoire');
+    this.nouvelleHistoire = { nom: '', type: 'Histoire', description: '' };
   }
-  reprendreHistoire(){
-    this.message.set('Créer une nouvelle histoire');
+
+  annulerAjout() {
+    this.showForm.set(false);
+    this.message.set('Ajout annule');
+  }
+
+  reprendreHistoire() {
+    this.message.set('Chargement des histoires...');
+    this.chargerLivres();
+  }
+
+  ajouterHistoire() {
+    if (!this.nouvelleHistoire.nom.trim()) {
+      this.message.set('Titre obligatoire');
+      return;
+    }
+
+    this.http.post('http://localhost:8080/api/livres', this.nouvelleHistoire)
+      .subscribe({
+        next: (response: any) => {
+          this.message.set(`Histoire ajoutee (ID: ${response.id})`);
+          this.showForm.set(false);
+          this.chargerLivres();
+          this.nouvelleHistoire = { nom: '', type: 'Histoire', description: '' };
+        },
+        error: (err) => {
+          this.message.set('Erreur: ' + err.message);
+          console.error('Erreur:', err);
+        }
+      });
   }
 
   chargerPersonnages() {
+    this.message.set('Chargement personnages...');
     this.http.get('http://localhost:8080/api/personnages')
       .subscribe({
         next: (data: any) => {
           this.personnages.set(data);
-          console.log('Personnages:', data);
+          this.message.set(`${data.length} personnage(s)`);
         },
-        error: (err) => {console.error('Erreur:', err);
+        error: (err) => {
+          this.message.set('Erreur: ' + err.message);
+        }
+      });
+  }
+
+  chargerLivres() {
+    this.message.set('Chargement livres...');
+    this.http.get('http://localhost:8080/api/livres')
+      .subscribe({
+        next: (data: any) => {
+          this.livres.set(data);
+          this.message.set(`${data.length} livre(s)`);
+        },
+        error: (err) => {
+          this.message.set('Erreur: ' + err.message);
         }
       });
   }
 
   testerConnexion() {
+    this.message.set('Test connexion...');
     this.http.get('http://localhost:8080/test', { responseType: 'text' })
       .subscribe({
         next: (data) => {
-          console.log('Réponse Java:', data); // recup java
+          this.message.set('Connexion OK');
+          console.log('Reponse Java:', data);
         },
         error: (err) => {
-          console.error('Erreur:', err);
+          this.message.set('Erreur connexion');
         }
       });
   }
