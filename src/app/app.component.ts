@@ -11,7 +11,6 @@ import { FormsModule } from '@angular/forms';
     <h1>Forge ton histoire</h1>
 
     <div>
-      <!-- entrée du site --> 
       <button (click)="creerlivre()">Creer un livre</button>
       <button (click)="reprendrelivre()">Reprendre un livre</button>
     </div>
@@ -20,26 +19,66 @@ import { FormsModule } from '@angular/forms';
       {{ message() }}
     </div>
 
-    <!-- livre afficher -->
+    <!-- LIVRE OUVERT -->
     <div *ngIf="livreActive()">
-      <h2> {{ livreActive().nom }}</h2>
+      <h2>{{ livreActive().nom }}</h2>
       <p><em>{{ livreActive().type }}</em></p>
       <p>{{ livreActive().description }}</p>
       <button (click)="fermerlivre()">Fermer</button>
     </div>
 
-    <!-- CHOIX D'UNE HISTOIRE A REPRENDRE -->
-    <div *ngIf="showSelection()" style="border: 1px solid blue; padding: 10px; margin-top: 10px;">
+    <!-- UNIVERS DU LIVRE OUVERT -->
+    <div *ngIf="livreActive()">
+      <h2>Univers</h2>
+
+      <div *ngIf="univers().length === 0">
+        Aucun univers dans ce livre.
+      </div>
+
+      <div *ngFor="let u of univers()">
+        <strong>{{ u.nom }}</strong>- <em>{{ u.type }}</em>
+      </div>
+
+      <button (click)="showFormUnivers.set(true)" *ngIf="!showFormUnivers()">
+        + Nouvel univers
+      </button>
+
+      <div *ngIf="showFormUnivers()">
+        <h3>Ajouter un univers</h3>
+        <div>
+          <label>Nom *</label>
+          <input [(ngModel)]="nouvelUnivers.nom" placeholder="Terre du Milieu">
+        </div>
+        <div>
+          <label>Type</label>
+          <input [(ngModel)]="nouvelUnivers.type" placeholder="Fantastique">
+        </div>
+        <button (click)="ajouterUnivers()">Ajouter</button>
+        <button (click)="showFormUnivers.set(false)">Annuler</button>
+      </div>
+    </div>
+
+    <!-- PERSONNAGES DU LIVRE OUVERT -->
+    <div *ngIf="personnages().length > 0">
+      <h2>Personnages</h2>
+      <div *ngFor="let p of personnages()">
+        <strong>{{ p.prenom }} {{ p.nom }}</strong>
+        <span>{{ p.description }}</span>
+      </div>
+    </div>
+
+    <!-- CHOIX D'UN LIVRE -->
+    <div *ngIf="showSelection()">
       <h2>Choisir un livre</h2>
       <div *ngIf="livres().length === 0">Aucun livre disponible.</div>
-      <div *ngFor="let livre of livres()" style="border-bottom: 1px solid #ccc; padding: 6px 0;">
+      <div *ngFor="let livre of livres()">
         <strong>{{ livre.nom }}</strong> - <span>{{ livre.type }}</span>
         <button (click)="ouvrirlivre(livre)">Reprendre</button>
       </div>
       <button (click)="annulerSelection()">Annuler</button>
     </div>
 
-    <!-- formulaire de création -->
+    <!-- FORMULAIRE CREATION LIVRE -->
     <div *ngIf="showForm()">
       <h2>Ajouter un livre</h2>
       <div>
@@ -57,44 +96,26 @@ import { FormsModule } from '@angular/forms';
       <button (click)="ajouterlivre()">Ajouter</button>
       <button (click)="annulerAjout()">Annuler</button>
     </div>
-
-    <!-- affichage personnages -->
-    <div *ngIf="personnages().length > 0">
-      <h2>Personnages</h2>
-      <div *ngFor="let p of personnages()">
-        <strong>{{ p.prenom }} {{ p.nom }}</strong>
-        <span>{{ p.description }}</span>
-      </div>
-    </div>
-
-    <!-- affichage livres -->
-    <div *ngIf="livres().length > 0">
-      <h2>Livres</h2>
-      <div *ngFor="let livre of livres()">
-        <strong>{{ livre.nom }}</strong> - <span>{{ livre.type }}</span>
-        <br>
-        <span>{{ livre.description }}</span>
-      </div>
-    </div>
   `
 })
 export class App {
-  // Adresse du serveur Java, en un seul endroit
   private apiUrl = 'http://localhost:8080';
 
-  // Etat de l'application
+  // État général
   message = signal('');
-  personnages = signal<any[]>([]);
   livres = signal<any[]>([]);
+  livreActive = signal<any>(null);
+  personnages = signal<any[]>([]);
+  univers = signal<any[]>([]);
+
+  // Modes d'affichage
   showForm = signal(false);
   showSelection = signal(false);
-  livreActive = signal<any>(null);
+  showFormUnivers = signal(false);
 
-  nouvellelivre = {
-    nom: '',
-    type: 'livre',
-    description: ''
-  };
+  // Formulaires
+  nouvellelivre = { nom: '', type: 'Roman', description: '' };
+  nouvelUnivers = { nom: '', type: '' };
 
   private http = inject(HttpClient);
 
@@ -102,18 +123,20 @@ export class App {
     this.chargerLivres();
   }
 
-  // ===== CREATION =====
+  // ===== CREATION LIVRE =====
   creerlivre() {
     this.showForm.set(true);
     this.showSelection.set(false);
     this.livreActive.set(null);
+    this.personnages.set([]);
+    this.univers.set([]);
     this.message.set('Formulaire ajout livre');
-    this.nouvellelivre = { nom: '', type: 'livre', description: '' };
+    this.nouvellelivre = { nom: '', type: 'Roman', description: '' };
   }
 
   annulerAjout() {
     this.showForm.set(false);
-    this.message.set('Ajout annule');
+    this.message.set('Ajout annulé');
   }
 
   ajouterlivre() {
@@ -125,20 +148,21 @@ export class App {
     this.http.post(`${this.apiUrl}/api/livres`, this.nouvellelivre)
       .subscribe({
         next: (response: any) => {
-          this.message.set(`livre ajoutee (ID: ${response.id})`);
+          this.message.set(`Livre ajouté (ID: ${response.id})`);
           this.showForm.set(false);
           this.chargerLivres();
-          this.nouvellelivre = { nom: '', type: 'livre', description: '' };
+          this.nouvellelivre = { nom: '', type: 'Roman', description: '' };
         },
-        error: (err) => {
-          this.message.set('Erreur: ' + err.message);
-        }
+        error: (err) => this.message.set('Erreur: ' + err.message)
       });
   }
 
+  // ===== REPRISE LIVRE =====
   reprendrelivre() {
     this.showForm.set(false);
     this.livreActive.set(null);
+    this.personnages.set([]);
+    this.univers.set([]);
     this.showSelection.set(true);
     this.message.set('Choisissez un livre');
     this.chargerLivres();
@@ -148,7 +172,8 @@ export class App {
     this.livreActive.set(livre);
     this.showSelection.set(false);
     this.message.set(`Livre "${livre.nom}" ouvert`);
-    this.chargerPersonnagesDuLivre(livre.id); 
+    this.chargerPersonnagesDuLivre(livre.id);
+    this.chargerUniversDuLivre(livre.id);
   }
 
   annulerSelection() {
@@ -159,21 +184,53 @@ export class App {
   fermerlivre() {
     this.livreActive.set(null);
     this.personnages.set([]);
-    this.message.set('livre fermee');
+    this.univers.set([]);
+    this.showFormUnivers.set(false);
+    this.message.set('Livre fermé');
   }
 
-  chargerPersonnagesDuLivre(livreId: number) {
-  this.message.set('Chargement personnages...');
-  this.http.get(`${this.apiUrl}/api/personnages?livreId=${livreId}`)
-    .subscribe({
-      next: (data: any) => {
-        this.personnages.set(data);
-        this.message.set(`${data.length} personnage(s)`);
-      },
-      error: (err) => this.message.set('Erreur: ' + err.message)
-    });
-}
+  // ===== UNIVERS =====
+  chargerUniversDuLivre(livreId: number) {
+    this.http.get(`${this.apiUrl}/api/univers?livreId=${livreId}`)
+      .subscribe({
+        next: (data: any) => this.univers.set(data),
+        error: (err) => this.message.set('Erreur: ' + err.message)
+      });
+  }
 
+  ajouterUnivers() {
+    if (!this.nouvelUnivers.nom.trim()) {
+      this.message.set('Nom obligatoire');
+      return;
+    }
+    const livre = this.livreActive();
+    if (!livre) return;
+
+    this.http.post(`${this.apiUrl}/api/univers?livreId=${livre.id}`, this.nouvelUnivers)
+      .subscribe({
+        next: () => {
+          this.message.set('Univers ajouté');
+          this.showFormUnivers.set(false);
+          this.nouvelUnivers = { nom: '', type: '' };
+          this.chargerUniversDuLivre(livre.id);
+        },
+        error: (err) => this.message.set('Erreur: ' + err.message)
+      });
+  }
+
+  // ===== PERSONNAGES =====
+  chargerPersonnagesDuLivre(livreId: number) {
+    this.http.get(`${this.apiUrl}/api/personnages?livreId=${livreId}`)
+      .subscribe({
+        next: (data: any) => {
+          this.personnages.set(data);
+          this.message.set(`${data.length} personnage(s)`);
+        },
+        error: (err) => this.message.set('Erreur: ' + err.message)
+      });
+  }
+
+  // ===== LIVRES =====
   chargerLivres() {
     this.message.set('Chargement livres...');
     this.http.get(`${this.apiUrl}/api/livres`)
@@ -182,9 +239,7 @@ export class App {
           this.livres.set(data);
           this.message.set(`${data.length} livre(s)`);
         },
-        error: (err) => {
-          this.message.set('Erreur: ' + err.message);
-        }
+        error: (err) => this.message.set('Erreur: ' + err.message)
       });
   }
 
