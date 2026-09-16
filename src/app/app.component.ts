@@ -35,8 +35,41 @@ import { FormsModule } from '@angular/forms';
         Aucun univers dans ce livre.
       </div>
 
-      <div *ngFor="let u of univers()">
-        <strong>{{ u.nom }}</strong>- <em>{{ u.type }}</em>
+      <div *ngFor="let u of univers()" style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
+        <h3>{{ u.nom }} <em>({{ u.type }})</em></h3>
+
+        <!-- PERSONNAGES DE CET UNIVERS -->
+        <h4>Personnages</h4>
+        <div *ngIf="personnagesParUnivers()[u.id]?.length === 0">
+          Aucun personnage dans cet univers.
+        </div>
+        <div *ngFor="let p of personnagesParUnivers()[u.id]">
+          <strong>{{ p.prenom }} {{ p.nom }}</strong> — <span>{{ p.description }}</span>
+        </div>
+
+        <!-- Bouton pour ouvrir le formulaire de ce univers -->
+        <button (click)="ouvrirFormPersonnage(u.id)">
+          + Ajouter un personnage
+        </button>
+
+        <!-- Formulaire de création de personnage -->
+        <div *ngIf="showFormPersonnage() === u.id" style="margin-top: 10px;">
+          <h5>Nouveau personnage dans {{ u.nom }}</h5>
+          <div>
+            <label>Nom</label>
+            <input [(ngModel)]="nouveauPersonnage.nom" placeholder="Baggins">
+          </div>
+          <div>
+            <label>Prénom</label>
+            <input [(ngModel)]="nouveauPersonnage.prenom" placeholder="Frodon">
+          </div>
+          <div>
+            <label>Description</label>
+            <input [(ngModel)]="nouveauPersonnage.description" placeholder="Porteur de l'Anneau">
+          </div>
+          <button (click)="ajouterPersonnage(u.id)">Ajouter</button>
+          <button (click)="fermerFormPersonnage()">Annuler</button>
+        </div>
       </div>
 
       <button (click)="showFormUnivers.set(true)" *ngIf="!showFormUnivers()">
@@ -55,15 +88,6 @@ import { FormsModule } from '@angular/forms';
         </div>
         <button (click)="ajouterUnivers()">Ajouter</button>
         <button (click)="showFormUnivers.set(false)">Annuler</button>
-      </div>
-    </div>
-
-    <!-- PERSONNAGES DU LIVRE OUVERT -->
-    <div *ngIf="personnages().length > 0">
-      <h2>Personnages</h2>
-      <div *ngFor="let p of personnages()">
-        <strong>{{ p.prenom }} {{ p.nom }}</strong>
-        <span>{{ p.description }}</span>
       </div>
     </div>
 
@@ -105,17 +129,19 @@ export class App {
   message = signal('');
   livres = signal<any[]>([]);
   livreActive = signal<any>(null);
-  personnages = signal<any[]>([]);
   univers = signal<any[]>([]);
+  personnagesParUnivers = signal<{ [universId: number]: any[] }>({});
 
   // Modes d'affichage
   showForm = signal(false);
   showSelection = signal(false);
   showFormUnivers = signal(false);
+  showFormPersonnage = signal<number | null>(null);  // id de l'univers, ou null
 
   // Formulaires
   nouvellelivre = { nom: '', type: 'Roman', description: '' };
   nouvelUnivers = { nom: '', type: '' };
+  nouveauPersonnage = { nom: '', prenom: '', description: '' };
 
   private http = inject(HttpClient);
 
@@ -128,8 +154,8 @@ export class App {
     this.showForm.set(true);
     this.showSelection.set(false);
     this.livreActive.set(null);
-    this.personnages.set([]);
     this.univers.set([]);
+    this.personnagesParUnivers.set({});
     this.message.set('Formulaire ajout livre');
     this.nouvellelivre = { nom: '', type: 'Roman', description: '' };
   }
@@ -161,8 +187,8 @@ export class App {
   reprendrelivre() {
     this.showForm.set(false);
     this.livreActive.set(null);
-    this.personnages.set([]);
     this.univers.set([]);
+    this.personnagesParUnivers.set({});
     this.showSelection.set(true);
     this.message.set('Choisissez un livre');
     this.chargerLivres();
@@ -172,7 +198,6 @@ export class App {
     this.livreActive.set(livre);
     this.showSelection.set(false);
     this.message.set(`Livre "${livre.nom}" ouvert`);
-    this.chargerPersonnagesDuLivre(livre.id);
     this.chargerUniversDuLivre(livre.id);
   }
 
@@ -183,9 +208,10 @@ export class App {
 
   fermerlivre() {
     this.livreActive.set(null);
-    this.personnages.set([]);
     this.univers.set([]);
+    this.personnagesParUnivers.set({});
     this.showFormUnivers.set(false);
+    this.showFormPersonnage.set(null);
     this.message.set('Livre fermé');
   }
 
@@ -193,7 +219,13 @@ export class App {
   chargerUniversDuLivre(livreId: number) {
     this.http.get(`${this.apiUrl}/api/univers?livreId=${livreId}`)
       .subscribe({
-        next: (data: any) => this.univers.set(data),
+        next: (data: any) => {
+          this.univers.set(data);
+          // Pour chaque univers, charger ses personnages
+          for (const u of data) {
+            this.chargerPersonnagesDeUnivers(u.id);
+          }
+        },
         error: (err) => this.message.set('Erreur: ' + err.message)
       });
   }
@@ -219,12 +251,40 @@ export class App {
   }
 
   // ===== PERSONNAGES =====
-  chargerPersonnagesDuLivre(livreId: number) {
-    this.http.get(`${this.apiUrl}/api/personnages?livreId=${livreId}`)
+  chargerPersonnagesDeUnivers(universId: number) {
+    this.http.get(`${this.apiUrl}/api/personnages?universId=${universId}`)
       .subscribe({
         next: (data: any) => {
-          this.personnages.set(data);
-          this.message.set(`${data.length} personnage(s)`);
+          const copie = { ...this.personnagesParUnivers() };
+          copie[universId] = data;
+          this.personnagesParUnivers.set(copie);
+        },
+        error: (err) => this.message.set('Erreur: ' + err.message)
+      });
+  }
+
+  ouvrirFormPersonnage(universId: number) {
+    this.showFormPersonnage.set(universId);
+    this.nouveauPersonnage = { nom: '', prenom: '', description: '' };
+  }
+
+  fermerFormPersonnage() {
+    this.showFormPersonnage.set(null);
+  }
+
+  ajouterPersonnage(universId: number) {
+    if (!this.nouveauPersonnage.nom.trim() || !this.nouveauPersonnage.prenom.trim()) {
+      this.message.set('Nom et prenom obligatoires');
+      return;
+    }
+
+    this.http.post(`${this.apiUrl}/api/personnages?universId=${universId}`, this.nouveauPersonnage)
+      .subscribe({
+        next: () => {
+          this.message.set('Personnage ajouté');
+          this.showFormPersonnage.set(null);
+          this.nouveauPersonnage = { nom: '', prenom: '', description: '' };
+          this.chargerPersonnagesDeUnivers(universId);
         },
         error: (err) => this.message.set('Erreur: ' + err.message)
       });
