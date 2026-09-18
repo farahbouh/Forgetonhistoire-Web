@@ -44,7 +44,10 @@ import { FormsModule } from '@angular/forms';
           Aucun personnage dans cet univers.
         </div>
         <div *ngFor="let p of personnagesParUnivers()[u.id]">
-          <strong>{{ p.prenom }} {{ p.nom }}</strong> — <span>{{ p.description }}</span>
+          <strong>{{ p.prenom }} {{ p.nom }}</strong> - <span>{{ p.description }}</span>
+          <span *ngIf="p.dateNaissance && p.dateNaissance.tabdate">
+  (né le {{ p.dateNaissance.tabdate[2].c }}/{{ p.dateNaissance.tabdate[1].c }}/{{ p.dateNaissance.tabdate[0].c }})
+</span>
         </div>
 
         <!-- Bouton pour ouvrir le formulaire de ce univers -->
@@ -66,6 +69,18 @@ import { FormsModule } from '@angular/forms';
           <div>
             <label>Description</label>
             <input [(ngModel)]="nouveauPersonnage.description" placeholder="Porteur de l'Anneau">
+          </div>
+          <div>
+            <label>Jour de naissance</label>
+            <input type="number" [(ngModel)]="nouveauPersonnage.jour" placeholder="15">
+          </div>
+          <div>
+            <label>Mois de naissance</label>
+            <input type="number" [(ngModel)]="nouveauPersonnage.mois" placeholder="6">
+          </div>
+          <div>
+            <label>Année de naissance</label>
+            <input type="number" [(ngModel)]="nouveauPersonnage.annee" placeholder="2968">
           </div>
           <button (click)="ajouterPersonnage(u.id)">Ajouter</button>
           <button (click)="fermerFormPersonnage()">Annuler</button>
@@ -136,12 +151,19 @@ export class App {
   showForm = signal(false);
   showSelection = signal(false);
   showFormUnivers = signal(false);
-  showFormPersonnage = signal<number | null>(null);  // id de l'univers, ou null
+  showFormPersonnage = signal<number | null>(null);
 
   // Formulaires
   nouvellelivre = { nom: '', type: 'Roman', description: '' };
   nouvelUnivers = { nom: '', type: '' };
-  nouveauPersonnage = { nom: '', prenom: '', description: '' };
+  nouveauPersonnage = {
+    nom: '',
+    prenom: '',
+    description: '',
+    jour: null as number | null,
+    mois: null as number | null,
+    annee: null as number | null
+  };
 
   private http = inject(HttpClient);
 
@@ -221,7 +243,6 @@ export class App {
       .subscribe({
         next: (data: any) => {
           this.univers.set(data);
-          // Pour chaque univers, charger ses personnages
           for (const u of data) {
             this.chargerPersonnagesDeUnivers(u.id);
           }
@@ -265,7 +286,7 @@ export class App {
 
   ouvrirFormPersonnage(universId: number) {
     this.showFormPersonnage.set(universId);
-    this.nouveauPersonnage = { nom: '', prenom: '', description: '' };
+    this.nouveauPersonnage = { nom: '', prenom: '', description: '', jour: null, mois: null, annee: null };
   }
 
   fermerFormPersonnage() {
@@ -283,7 +304,7 @@ export class App {
         next: () => {
           this.message.set('Personnage ajouté');
           this.showFormPersonnage.set(null);
-          this.nouveauPersonnage = { nom: '', prenom: '', description: '' };
+          this.nouveauPersonnage = { nom: '', prenom: '', description: '', jour: null, mois: null, annee: null };
           this.chargerPersonnagesDeUnivers(universId);
         },
         error: (err) => this.message.set('Erreur: ' + err.message)
