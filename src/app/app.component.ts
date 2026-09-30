@@ -48,6 +48,9 @@ import { FormsModule } from '@angular/forms';
           <span *ngIf="p.dateNaissance && p.dateNaissance.tabdate">
   (né le {{ p.dateNaissance.tabdate[2].c }}/{{ p.dateNaissance.tabdate[1].c }}/{{ p.dateNaissance.tabdate[0].c }})
 </span>
+          <span *ngIf="p.dateDeces && p.dateDeces.tabdate">
+            (décédé le {{ p.dateDeces.tabdate[2].c }}/{{ p.dateDeces.tabdate[1].c }}/{{ p.dateDeces.tabdate[0].c }})
+          </span>
         </div>
 
         <!-- Bouton pour ouvrir le formulaire de ce univers -->
@@ -81,6 +84,18 @@ import { FormsModule } from '@angular/forms';
           <div>
             <label>Année de naissance</label>
             <input type="number" [(ngModel)]="nouveauPersonnage.annee" placeholder="2968">
+          </div>
+          <div>
+            <label>Jour de décès</label>
+            <input type="number" [(ngModel)]="nouveauPersonnage.jourDeces">
+          </div>
+          <div>
+            <label>Mois de décès</label>
+            <input type="number" [(ngModel)]="nouveauPersonnage.moisDeces">
+          </div>
+          <div>
+            <label>Année de décès</label>
+            <input type="number" [(ngModel)]="nouveauPersonnage.anneeDeces">
           </div>
           <button (click)="ajouterPersonnage(u.id)">Ajouter</button>
           <button (click)="fermerFormPersonnage()">Annuler</button>
@@ -156,14 +171,20 @@ export class App {
   // Formulaires
   nouvellelivre = { nom: '', type: 'Roman', description: '' };
   nouvelUnivers = { nom: '', type: '' };
-  nouveauPersonnage = {
-    nom: '',
-    prenom: '',
-    description: '',
-    jour: null as number | null,
-    mois: null as number | null,
-    annee: null as number | null
-  };
+  personnageVide() {
+    return {
+      nom: '',
+      prenom: '',
+      description: '',
+      jour: null as number | null,
+      mois: null as number | null,
+      annee: null as number | null,
+      jourDeces: null as number | null,
+      moisDeces: null as number | null,
+      anneeDeces: null as number | null
+    };
+  }
+  nouveauPersonnage = this.personnageVide();
 
   private http = inject(HttpClient);
 
@@ -286,7 +307,7 @@ export class App {
 
   ouvrirFormPersonnage(universId: number) {
     this.showFormPersonnage.set(universId);
-    this.nouveauPersonnage = { nom: '', prenom: '', description: '', jour: null, mois: null, annee: null };
+    this.nouveauPersonnage = this.personnageVide();
   }
 
   fermerFormPersonnage() {
@@ -304,10 +325,10 @@ export class App {
         next: () => {
           this.message.set('Personnage ajouté');
           this.showFormPersonnage.set(null);
-          this.nouveauPersonnage = { nom: '', prenom: '', description: '', jour: null, mois: null, annee: null };
+          this.nouveauPersonnage = this.personnageVide();
           this.chargerPersonnagesDeUnivers(universId);
         },
-        error: (err) => this.message.set('Erreur: ' + err.message)
+        error: (err) => this.message.set(err.error?.erreur ?? 'Erreur: ' + err.message)
       });
   }
 
