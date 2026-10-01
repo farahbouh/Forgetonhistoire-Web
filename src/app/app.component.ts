@@ -1,4 +1,4 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
+    <main class="page">
     <h1>Forge ton histoire</h1>
 
     <div>
@@ -15,7 +16,7 @@ import { FormsModule } from '@angular/forms';
       <button (click)="reprendrelivre()">Reprendre un livre</button>
     </div>
 
-    <div *ngIf="message()">
+    <div *ngIf="message()" class="message" [class.erreur]="estErreur()">
       {{ message() }}
     </div>
 
@@ -24,7 +25,7 @@ import { FormsModule } from '@angular/forms';
       <h2>{{ livreActive().nom }}</h2>
       <p><em>{{ livreActive().type }}</em></p>
       <p>{{ livreActive().description }}</p>
-      <button (click)="fermerlivre()">Fermer</button>
+      <button class="secondaire" (click)="fermerlivre()">Fermer</button>
     </div>
 
     <!-- UNIVERS DU LIVRE OUVERT -->
@@ -35,7 +36,7 @@ import { FormsModule } from '@angular/forms';
         Aucun univers dans ce livre.
       </div>
 
-      <div *ngFor="let u of univers()" style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
+      <div *ngFor="let u of univers()" class="carte">
         <h3>{{ u.nom }} <em>({{ u.type }})</em></h3>
 
         <!-- PERSONNAGES DE CET UNIVERS -->
@@ -43,7 +44,7 @@ import { FormsModule } from '@angular/forms';
         <div *ngIf="personnagesParUnivers()[u.id]?.length === 0">
           Aucun personnage dans cet univers.
         </div>
-        <div *ngFor="let p of personnagesParUnivers()[u.id]">
+        <div *ngFor="let p of personnagesParUnivers()[u.id]" class="perso">
           <strong>{{ p.prenom }} {{ p.nom }}</strong> - <span>{{ p.description }}</span>
           <span *ngIf="p.dateNaissance && p.dateNaissance.tabdate">
   (né le {{ p.dateNaissance.tabdate[2].c }}/{{ p.dateNaissance.tabdate[1].c }}/{{ p.dateNaissance.tabdate[0].c }})
@@ -59,7 +60,7 @@ import { FormsModule } from '@angular/forms';
         </button>
 
         <!-- Formulaire de création de personnage -->
-        <div *ngIf="showFormPersonnage() === u.id" style="margin-top: 10px;">
+        <div *ngIf="showFormPersonnage() === u.id">
           <h5>Nouveau personnage dans {{ u.nom }}</h5>
           <div>
             <label>Nom</label>
@@ -73,6 +74,7 @@ import { FormsModule } from '@angular/forms';
             <label>Description</label>
             <input [(ngModel)]="nouveauPersonnage.description" placeholder="Porteur de l'Anneau">
           </div>
+          <div class="dates">
           <div>
             <label>Jour de naissance</label>
             <input type="number" [(ngModel)]="nouveauPersonnage.jour" placeholder="15">
@@ -85,6 +87,8 @@ import { FormsModule } from '@angular/forms';
             <label>Année de naissance</label>
             <input type="number" [(ngModel)]="nouveauPersonnage.annee" placeholder="2968">
           </div>
+          </div>
+          <div class="dates">
           <div>
             <label>Jour de décès</label>
             <input type="number" [(ngModel)]="nouveauPersonnage.jourDeces">
@@ -97,8 +101,9 @@ import { FormsModule } from '@angular/forms';
             <label>Année de décès</label>
             <input type="number" [(ngModel)]="nouveauPersonnage.anneeDeces">
           </div>
+          </div>
           <button (click)="ajouterPersonnage(u.id)">Ajouter</button>
-          <button (click)="fermerFormPersonnage()">Annuler</button>
+          <button class="secondaire" (click)="fermerFormPersonnage()">Annuler</button>
         </div>
       </div>
 
@@ -117,7 +122,7 @@ import { FormsModule } from '@angular/forms';
           <input [(ngModel)]="nouvelUnivers.type" placeholder="Fantastique">
         </div>
         <button (click)="ajouterUnivers()">Ajouter</button>
-        <button (click)="showFormUnivers.set(false)">Annuler</button>
+        <button class="secondaire" (click)="showFormUnivers.set(false)">Annuler</button>
       </div>
     </div>
 
@@ -129,7 +134,7 @@ import { FormsModule } from '@angular/forms';
         <strong>{{ livre.nom }}</strong> - <span>{{ livre.type }}</span>
         <button (click)="ouvrirlivre(livre)">Reprendre</button>
       </div>
-      <button (click)="annulerSelection()">Annuler</button>
+      <button class="secondaire" (click)="annulerSelection()">Annuler</button>
     </div>
 
     <!-- FORMULAIRE CREATION LIVRE -->
@@ -148,15 +153,18 @@ import { FormsModule } from '@angular/forms';
         <textarea [(ngModel)]="nouvellelivre.description" rows="3"></textarea>
       </div>
       <button (click)="ajouterlivre()">Ajouter</button>
-      <button (click)="annulerAjout()">Annuler</button>
+      <button class="secondaire" (click)="annulerAjout()">Annuler</button>
     </div>
-  `
+    </main>
+  `,
+  styleUrl: './app.css'
 })
 export class App {
   private apiUrl = 'http://localhost:8080';
 
   // État général
   message = signal('');
+  estErreur = computed(() => /erreur|incoh|obligatoire/i.test(this.message()));
   livres = signal<any[]>([]);
   livreActive = signal<any>(null);
   univers = signal<any[]>([]);

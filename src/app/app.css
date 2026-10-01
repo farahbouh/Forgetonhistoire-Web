@@ -1,0 +1,69 @@
+.page { width: min(92%, 900px); margin: 0 auto; padding: 48px 0 80px; }
+
+h1 { font-size: 40px; font-weight: 700; margin: 0 0 24px; }
+h2 { font-size: 28px; font-weight: 700; margin: 0 0 14px; }
+h3 { font-size: 20px; font-weight: 700; margin: 0 0 6px; }
+h4 { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--vert-moyen); margin: 24px 0 10px; }
+h5 { font-size: 16px; color: var(--vert-moyen); margin: 24px 0 8px; }
+em { font-style: normal; color: var(--vert-clair); }
+p { margin: 0 0 10px; }
+
+/* cartes */
+.hero, main > div:not(.message) {
+  background: var(--blanc);
+  border: 1px solid var(--gris-vert);
+  border-radius: 30px;
+  padding: 32px;
+  margin: 24px 0;
+}
+.carte {
+  background: var(--vert-tres-clair);
+  border: 1px solid var(--gris-vert);
+  border-radius: 20px;
+  padding: 24px;
+  margin: 20px 0;
+}
+.perso { padding: 8px 0; }
+
+/* boutons */
+button {
+  background: var(--vert-moyen);
+  color: var(--blanc);
+  border: 2px solid var(--vert-moyen);
+  border-radius: 60px;
+  padding: 10px 28px;
+  margin: 16px 10px 0 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+button:hover { background: var(--vert-fonce); border-color: var(--vert-fonce); }
+button.secondaire { background: transparent; color: var(--vert-moyen); }
+button.secondaire:hover { background: var(--vert-tres-clair); }
+
+/* formulaires */
+label { display: block; font-size: 14px; font-weight: 600; margin: 18px 0 4px; }
+input, textarea {
+  width: 100%;
+  padding: 12px 16px;
+  font: inherit;
+  background: var(--beige-vert);
+  border: 2px solid var(--gris-vert);
+  border-radius: 30px;
+}
+textarea { border-radius: 20px; }
+input:focus, textarea:focus { outline: none; border-color: var(--vert-moyen); background: var(--blanc); }
+.dates { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 16px; }
+
+/* messages */
+.message {
+  margin: 20px 0;
+  padding: 14px;
+  background: var(--vert-tres-clair);
+  border-radius: 30px;
+  text-align: center;
+  color: var(--vert-moyen);
+  font-weight: 600;
+}
+.message.erreur { background: var(--erreur-fond); color: var(--erreur-texte); }

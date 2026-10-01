@@ -1,1 +1,24 @@
-/* You can add global styles to this file, and also import other style files */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --vert-fonce: #1e3a2e;
+  --vert-moyen: #2d5a2d;
+  --vert-clair: #4a7c59;
+  --vert-tres-clair: #e8f0e8;
+  --beige-vert: #f0f5f0;
+  --gris-vert: #cbd5cb;
+  --blanc: #ffffff;
+  --ombre: rgba(45, 90, 45, 0.12);
+  --erreur-fond: #fbeeec;
+  --erreur-texte: #9a3b32;
+  --police: 'Inter', system-ui, sans-serif;
+  --rayon: 20px;
+}
+
+body {
+  font-family: var(--police);
+  background: var(--beige-vert);
+  color: var(--vert-fonce);
+  line-height: 1.7;
+  min-height: 100vh;
+}
