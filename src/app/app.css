@@ -44,6 +44,7 @@ button.secondaire:hover { background: var(--vert-tres-clair); }
 
 /* formulaires */
 label { display: block; font-size: 14px; font-weight: 600; margin: 18px 0 4px; }
+
 input, textarea {
   width: 100%;
   padding: 12px 16px;
@@ -51,19 +52,54 @@ input, textarea {
   background: var(--beige-vert);
   border: 2px solid var(--gris-vert);
   border-radius: 30px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 textarea { border-radius: 20px; }
-input:focus, textarea:focus { outline: none; border-color: var(--vert-moyen); background: var(--blanc); }
+input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--vert-moyen);
+  background: var(--blanc);
+}
 .dates { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 16px; }
 
 /* messages */
 .message {
-  margin: 20px 0;
-  padding: 14px;
-  background: var(--vert-tres-clair);
-  border-radius: 30px;
-  text-align: center;
-  color: var(--vert-moyen);
-  font-weight: 600;
+  margin: 12px 0;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 2px solid #4a90e2;
+  background-color: #eaf3fc;
+  color: #1a4a7a;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease, color 0.2s ease,
+              border-color 0.2s ease;
 }
-.message.erreur { background: var(--erreur-fond); color: var(--erreur-texte); }
+
+.message.erreur {
+  border: 2px solid #d93636;
+  background-color: #fdecec;
+  color: #8a1c1c;
+  animation: secousse 0.3s ease;
+}
+
+/* champ en erreur */
+.champ-erreur {
+  border: 2px solid #d93636 !important;
+  background-color: #fdecec !important;
+  box-shadow: 0 0 0 3px rgba(217, 54, 54, 0.2);
+  animation: secousse 0.3s ease;
+}
+
+.champ-erreur:focus {
+  border-color: #4a90e2 !important;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+}
+
+@keyframes secousse {
+  0%   { transform: translateX(0); }
+  25%  { transform: translateX(-4px); }
+  50%  { transform: translateX(4px); }
+  75%  { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}

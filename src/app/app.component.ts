@@ -64,11 +64,15 @@ import { FormsModule } from '@angular/forms';
           <h5>Nouveau personnage dans {{ u.nom }}</h5>
           <div>
             <label>Nom</label>
-            <input [(ngModel)]="nouveauPersonnage.nom" placeholder="Baggins">
+            <input [(ngModel)]="nouveauPersonnage.nom" placeholder="Baggins"
+                   (input)="champsEnErreur.set([])"
+                   [class.champ-erreur]="champsEnErreur().includes('persoNom')">
           </div>
           <div>
             <label>Prénom</label>
-            <input [(ngModel)]="nouveauPersonnage.prenom" placeholder="Frodon">
+            <input [(ngModel)]="nouveauPersonnage.prenom" placeholder="Frodon"
+                   (input)="champsEnErreur.set([])"
+                   [class.champ-erreur]="champsEnErreur().includes('persoPrenom')">
           </div>
           <div>
             <label>Description</label>
@@ -77,29 +81,41 @@ import { FormsModule } from '@angular/forms';
           <div class="dates">
           <div>
             <label>Jour de naissance</label>
-            <input type="number" [(ngModel)]="nouveauPersonnage.jour" placeholder="15">
+            <input type="number" [(ngModel)]="nouveauPersonnage.jour" placeholder="15"
+                   (input)="champsEnErreur.set([])"
+                   [class.champ-erreur]="champsEnErreur().includes('dateNaisJour')">
           </div>
           <div>
             <label>Mois de naissance</label>
-            <input type="number" [(ngModel)]="nouveauPersonnage.mois" placeholder="6">
+            <input type="number" [(ngModel)]="nouveauPersonnage.mois" placeholder="6"
+                   (input)="champsEnErreur.set([])"
+                   [class.champ-erreur]="champsEnErreur().includes('dateNaisMois')">
           </div>
           <div>
             <label>Année de naissance</label>
-            <input type="number" [(ngModel)]="nouveauPersonnage.annee" placeholder="2968">
+            <input type="number" [(ngModel)]="nouveauPersonnage.annee" placeholder="2968"
+                   (input)="champsEnErreur.set([])"
+                   [class.champ-erreur]="champsEnErreur().includes('dateNaisAnnee')">
           </div>
           </div>
           <div class="dates">
           <div>
             <label>Jour de décès</label>
-            <input type="number" [(ngModel)]="nouveauPersonnage.jourDeces">
+            <input type="number" [(ngModel)]="nouveauPersonnage.jourDeces"
+                   (input)="champsEnErreur.set([])"
+                   [class.champ-erreur]="champsEnErreur().includes('dateDecesJour')">
           </div>
           <div>
             <label>Mois de décès</label>
-            <input type="number" [(ngModel)]="nouveauPersonnage.moisDeces">
+            <input type="number" [(ngModel)]="nouveauPersonnage.moisDeces"
+                   (input)="champsEnErreur.set([])"
+                   [class.champ-erreur]="champsEnErreur().includes('dateDecesMois')">
           </div>
           <div>
             <label>Année de décès</label>
-            <input type="number" [(ngModel)]="nouveauPersonnage.anneeDeces">
+            <input type="number" [(ngModel)]="nouveauPersonnage.anneeDeces"
+                   (input)="champsEnErreur.set([])"
+                   [class.champ-erreur]="champsEnErreur().includes('dateDecesAnnee')">
           </div>
           </div>
           <button (click)="ajouterPersonnage(u.id)">Ajouter</button>
@@ -115,7 +131,9 @@ import { FormsModule } from '@angular/forms';
         <h3>Ajouter un univers</h3>
         <div>
           <label>Nom *</label>
-          <input [(ngModel)]="nouvelUnivers.nom" placeholder="Terre du Milieu">
+          <input [(ngModel)]="nouvelUnivers.nom" placeholder="Terre du Milieu"
+                 (input)="champsEnErreur.set([])"
+                 [class.champ-erreur]="champsEnErreur().includes('universNom')">
         </div>
         <div>
           <label>Type</label>
@@ -142,7 +160,9 @@ import { FormsModule } from '@angular/forms';
       <h2>Ajouter un livre</h2>
       <div>
         <label>Titre *</label>
-        <input [(ngModel)]="nouvellelivre.nom" placeholder="Titre">
+        <input [(ngModel)]="nouvellelivre.nom" placeholder="Titre"
+               (input)="champsEnErreur.set([])"
+               [class.champ-erreur]="champsEnErreur().includes('nom')">
       </div>
       <div>
         <label>Type</label>
@@ -175,6 +195,7 @@ export class App {
   showSelection = signal(false);
   showFormUnivers = signal(false);
   showFormPersonnage = signal<number | null>(null);
+  champsEnErreur = signal<string[]>([]);
 
   // Formulaires
   nouvellelivre = { nom: '', type: 'Roman', description: '' };
@@ -209,18 +230,22 @@ export class App {
     this.personnagesParUnivers.set({});
     this.message.set('Formulaire ajout livre');
     this.nouvellelivre = { nom: '', type: 'Roman', description: '' };
+    this.champsEnErreur.set([]);
   }
 
   annulerAjout() {
     this.showForm.set(false);
     this.message.set('Ajout annulé');
+    this.champsEnErreur.set([]);
   }
 
   ajouterlivre() {
     if (!this.nouvellelivre.nom.trim()) {
       this.message.set('Titre obligatoire');
+      this.champsEnErreur.set(['nom']);
       return;
     }
+    this.champsEnErreur.set([]);
 
     this.http.post(`${this.apiUrl}/api/livres`, this.nouvellelivre)
       .subscribe({
@@ -283,8 +308,10 @@ export class App {
   ajouterUnivers() {
     if (!this.nouvelUnivers.nom.trim()) {
       this.message.set('Nom obligatoire');
+      this.champsEnErreur.set(['universNom']);
       return;
     }
+    this.champsEnErreur.set([]);
     const livre = this.livreActive();
     if (!livre) return;
 
@@ -316,17 +343,28 @@ export class App {
   ouvrirFormPersonnage(universId: number) {
     this.showFormPersonnage.set(universId);
     this.nouveauPersonnage = this.personnageVide();
+    this.champsEnErreur.set([]);
   }
 
   fermerFormPersonnage() {
     this.showFormPersonnage.set(null);
+    this.champsEnErreur.set([]);
   }
 
   ajouterPersonnage(universId: number) {
-    if (!this.nouveauPersonnage.nom.trim() || !this.nouveauPersonnage.prenom.trim()) {
+    const erreurs: string[] = [];
+    if (!this.nouveauPersonnage.nom.trim()) erreurs.push('persoNom');
+    if (!this.nouveauPersonnage.prenom.trim()) erreurs.push('persoPrenom');
+
+    if (erreurs.length > 0) {
       this.message.set('Nom et prenom obligatoires');
+      this.champsEnErreur.set(erreurs);
       return;
     }
+    this.champsEnErreur.set([]);
+
+    // Debug : voir ce qu'on envoie au serveur
+    console.log('>>> ENVOI :', JSON.stringify(this.nouveauPersonnage));
 
     this.http.post(`${this.apiUrl}/api/personnages?universId=${universId}`, this.nouveauPersonnage)
       .subscribe({
@@ -336,7 +374,21 @@ export class App {
           this.nouveauPersonnage = this.personnageVide();
           this.chargerPersonnagesDeUnivers(universId);
         },
-        error: (err) => this.message.set(err.error?.erreur ?? 'Erreur: ' + err.message)
+        error: (err) => {
+          // Debug : voir ce que le serveur renvoie
+          console.log('>>> ERREUR SERVEUR :', err.status, err.error);
+
+          const msg = err.error?.erreur ?? 'Erreur: ' + err.message;
+          this.message.set(msg);
+
+          // Si c'est une incohérence de dates → encadrer les 6 champs de date
+          if (/incoh/i.test(msg)) {
+            this.champsEnErreur.set([
+              'dateNaisJour', 'dateNaisMois', 'dateNaisAnnee',
+              'dateDecesJour', 'dateDecesMois', 'dateDecesAnnee'
+            ]);
+          }
+        }
       });
   }
 
