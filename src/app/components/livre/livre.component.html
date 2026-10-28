@@ -1,0 +1,92 @@
+<!-- Boutons d'action principaux -->
+<div class="btn-groupe">
+  <button (click)="creerlivre()">Creer un livre</button>
+  <button (click)="reprendrelivre()">Reprendre un livre</button>
+</div>
+
+<!-- Message global -->
+<app-message zone="global" />
+
+<!-- LIVRE OUVERT -->
+<div *ngIf="livreActive()" class="section">
+  <h2>{{ livreActive().nom }}</h2>
+  <p><em>{{ livreActive().type }}</em></p>
+  <p>{{ livreActive().description }}</p>
+  <button class="secondaire isole" (click)="fermerlivre()">Fermer</button>
+</div>
+
+<!-- UNIVERS DU LIVRE OUVERT -->
+<div *ngIf="livreActive()" class="section">
+  <h2>Univers</h2>
+
+  <div *ngIf="univers().length === 0">
+    Aucun univers dans ce livre.
+  </div>
+
+  <div *ngFor="let u of univers(); trackBy: trackById" class="carte">
+    <h3>{{ u.nom }} <em>({{ u.type }})</em></h3>
+    <app-personnage [univers]="u" />
+  </div>
+
+  <button class="isole" (click)="showFormUnivers.set(true)" *ngIf="!showFormUnivers()">
+    + Nouvel univers
+  </button>
+
+  <div *ngIf="showFormUnivers()">
+    <h3>Ajouter un univers</h3>
+    <div>
+      <label>Nom *</label>
+      <input [(ngModel)]="nouvelUnivers.nom" placeholder="Terre du Milieu"
+             (input)="champsEnErreur.set([])"
+             [class.champ-erreur]="champsEnErreur().includes('universNom')">
+    </div>
+    <div>
+      <label>Type</label>
+      <input [(ngModel)]="nouvelUnivers.type" placeholder="Fantastique">
+    </div>
+
+    <app-message zone="univers" />
+
+    <div class="btn-groupe">
+      <button (click)="ajouterUnivers()">Ajouter</button>
+      <button class="secondaire" (click)="showFormUnivers.set(false)">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHOIX D'UN LIVRE -->
+<div *ngIf="showSelection()" class="section">
+  <h2>Choisir un livre</h2>
+  <div *ngIf="livres().length === 0">Aucun livre disponible.</div>
+  <div *ngFor="let livre of livres()" class="ligne-livre">
+    <span><strong>{{ livre.nom }}</strong> - {{ livre.type }}</span>
+    <button (click)="ouvrirlivre(livre)">Reprendre</button>
+  </div>
+  <button class="secondaire isole" (click)="annulerSelection()">Annuler</button>
+</div>
+
+<!-- FORMULAIRE LIVRE -->
+<div *ngIf="showForm()" class="section">
+  <h2>Ajouter un livre</h2>
+  <div>
+    <label>Titre *</label>
+    <input [(ngModel)]="nouvellelivre.nom" placeholder="Titre"
+           (input)="champsEnErreur.set([])"
+           [class.champ-erreur]="champsEnErreur().includes('nom')">
+  </div>
+  <div>
+    <label>Type</label>
+    <input [(ngModel)]="nouvellelivre.type" placeholder="Ex: Roman">
+  </div>
+  <div>
+    <label>Description</label>
+    <textarea [(ngModel)]="nouvellelivre.description" rows="3"></textarea>
+  </div>
+
+  <app-message zone="livre" />
+
+  <div class="btn-groupe">
+    <button (click)="ajouterlivre()">Ajouter</button>
+    <button class="secondaire" (click)="annulerAjout()">Annuler</button>
+  </div>
+</div>

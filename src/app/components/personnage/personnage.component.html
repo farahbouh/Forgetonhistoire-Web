@@ -1,0 +1,128 @@
+<h4>Personnages</h4>
+
+<div *ngIf="personnages()?.length === 0">
+  Aucun personnage dans cet univers.
+</div>
+
+<!-- Liste des personnages : chaque personnage a deux modes (lecture / edition) -->
+<div *ngFor="let p of personnages()" class="perso">
+  <!-- MODE LECTURE -->
+  <ng-container *ngIf="personnageEnEdition() !== p.id">
+    <div class="perso-infos">
+      <strong>{{ p.prenom }} {{ p.nom }}</strong>
+      <span *ngIf="p.description"> - {{ p.description }}</span>
+      <span *ngIf="p.dateNaissance?.tabdate">
+        (né le {{ p.dateNaissance.tabdate[2].c }}/{{ p.dateNaissance.tabdate[1].c }}/{{ p.dateNaissance.tabdate[0].c }})
+      </span>
+      <span *ngIf="p.dateDeces?.tabdate">
+        (décédé le {{ p.dateDeces.tabdate[2].c }}/{{ p.dateDeces.tabdate[1].c }}/{{ p.dateDeces.tabdate[0].c }}<ng-container *ngIf="ageAuDeces(p) !== null">, à l'âge de {{ ageAuDeces(p) }} ans</ng-container>)
+      </span>
+    </div>
+
+    <!-- TEST VIVANT / MORT A UNE ANNEE DONNEE -->
+    <div class="test-vivant">
+      <label>Vivant en l'an :</label>
+      <input type="number" [(ngModel)]="anneeTest[p.id]" placeholder="ex: 3019">
+
+      <span *ngIf="statut(p, anneeTest[p.id]) === 'pas-ne'" class="badge pas-ne">
+        {{ texteAge(p, anneeTest[p.id]) || 'pas encore né' }}
+      </span>
+
+      <span *ngIf="statut(p, anneeTest[p.id]) === 'vivant'" class="badge vivant">
+        {{ texteAge(p, anneeTest[p.id]) || 'vivant' }}
+      </span>
+
+      <span *ngIf="statut(p, anneeTest[p.id]) === 'mort'" class="badge mort">
+        {{ texteAge(p, anneeTest[p.id]) || 'mort' }}
+      </span>
+    </div>
+
+    <button class="secondaire petit" (click)="ouvrirFormModifPersonnage(p)">
+      Modifier
+    </button>
+  </ng-container>
+
+  <!-- MODE EDITION -->
+  <ng-container *ngIf="personnageEnEdition() === p.id">
+    <ng-container *ngTemplateOutlet="formulaire; context: { titre: 'Modifier ' + p.prenom + ' ' + p.nom, bouton: 'Enregistrer' }" />
+  </ng-container>
+</div>
+
+<!-- FORMULAIRE CREATION PERSONNAGE -->
+<ng-container *ngIf="personnageEnCreation()">
+  <ng-container *ngTemplateOutlet="formulaire; context: { titre: 'Nouveau personnage dans ' + univers().nom, bouton: 'Ajouter' }" />
+</ng-container>
+
+<button class="isole" (click)="ouvrirFormPersonnage()" *ngIf="!personnageEnCreation()">
+  + Ajouter un personnage
+</button>
+
+<!-- Formulaire commun création / modification -->
+<ng-template #formulaire let-titre="titre" let-bouton="bouton">
+  <div class="perso-edition">
+    <h5>{{ titre }}</h5>
+    <div>
+      <label>Nom</label>
+      <input [(ngModel)]="nouveauPersonnage.nom" placeholder="Baggins"
+             (input)="champsEnErreur.set([])"
+             [class.champ-erreur]="champsEnErreur().includes('persoNom')">
+    </div>
+    <div>
+      <label>Prénom</label>
+      <input [(ngModel)]="nouveauPersonnage.prenom" placeholder="Frodon"
+             (input)="champsEnErreur.set([])"
+             [class.champ-erreur]="champsEnErreur().includes('persoPrenom')">
+    </div>
+    <div>
+      <label>Description</label>
+      <input [(ngModel)]="nouveauPersonnage.description" placeholder="Porteur de l'Anneau">
+    </div>
+    <div class="dates">
+      <div>
+        <label>Jour de naissance</label>
+        <input type="number" [(ngModel)]="nouveauPersonnage.jour" placeholder="15"
+               (input)="champsEnErreur.set([])"
+               [class.champ-erreur]="champsEnErreur().includes('dateNaisJour')">
+      </div>
+      <div>
+        <label>Mois de naissance</label>
+        <input type="number" [(ngModel)]="nouveauPersonnage.mois" placeholder="6"
+               (input)="champsEnErreur.set([])"
+               [class.champ-erreur]="champsEnErreur().includes('dateNaisMois')">
+      </div>
+      <div>
+        <label>Année de naissance</label>
+        <input type="number" [(ngModel)]="nouveauPersonnage.annee" placeholder="2968"
+               (input)="champsEnErreur.set([])"
+               [class.champ-erreur]="champsEnErreur().includes('dateNaisAnnee')">
+      </div>
+    </div>
+    <div class="dates">
+      <div>
+        <label>Jour de décès</label>
+        <input type="number" [(ngModel)]="nouveauPersonnage.jourDeces"
+               (input)="champsEnErreur.set([])"
+               [class.champ-erreur]="champsEnErreur().includes('dateDecesJour')">
+      </div>
+      <div>
+        <label>Mois de décès</label>
+        <input type="number" [(ngModel)]="nouveauPersonnage.moisDeces"
+               (input)="champsEnErreur.set([])"
+               [class.champ-erreur]="champsEnErreur().includes('dateDecesMois')">
+      </div>
+      <div>
+        <label>Année de décès</label>
+        <input type="number" [(ngModel)]="nouveauPersonnage.anneeDeces"
+               (input)="champsEnErreur.set([])"
+               [class.champ-erreur]="champsEnErreur().includes('dateDecesAnnee')">
+      </div>
+    </div>
+
+    <app-message zone="personnage" />
+
+    <div class="btn-groupe">
+      <button (click)="enregistrerPersonnage()">{{ bouton }}</button>
+      <button class="secondaire" (click)="fermerFormPersonnage()">Annuler</button>
+    </div>
+  </div>
+</ng-template>

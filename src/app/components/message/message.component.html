@@ -1,0 +1,4 @@
+<div *ngIf="messages.message() && messages.zoneMessage() === zone()"
+     class="message" [class.erreur]="messages.estErreur()">
+  {{ messages.message() }}
+</div>

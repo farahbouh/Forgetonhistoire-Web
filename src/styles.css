@@ -22,3 +22,224 @@ body {
   line-height: 1.7;
   min-height: 100vh;
 }
+/* Conteneur principal */
+.page {
+  width: min(92%, 900px);
+  margin: 0 auto;
+  padding: 48px 0 80px;
+}
+
+/* Titres */
+h1 { font-size: 40px; font-weight: 700; margin: 0 0 32px; }
+h2 { font-size: 28px; font-weight: 700; margin: 0 0 16px; }
+h3 { font-size: 20px; font-weight: 700; margin: 0 0 8px; }
+h4 { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--vert-moyen); margin: 24px 0 12px; }
+h5 { font-size: 16px; color: var(--vert-moyen); margin: 0 0 12px; }
+em { font-style: normal; color: var(--vert-clair); }
+p { margin: 0 0 12px; }
+
+/* Sections : padding uniforme, margin seulement en bas */
+.section {
+  background: var(--blanc);
+  border: 1px solid var(--gris-vert);
+  border-radius: 30px;
+  padding: 32px;
+  margin: 0 0 24px 0;
+}
+
+.section > *:last-child {
+  margin-bottom: 0;
+}
+
+/* Cartes (univers) */
+.carte {
+  background: var(--vert-tres-clair);
+  border: 1px solid var(--gris-vert);
+  border-radius: 20px;
+  padding: 24px;
+  margin: 0 0 20px 0;
+}
+
+.carte > *:last-child {
+  margin-bottom: 0;
+}
+
+/* Ligne d'un livre dans la selection */
+.ligne-livre {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--gris-vert);
+}
+.ligne-livre:last-child {
+  border-bottom: none;
+}
+
+/* Personnage : mode lecture (ligne flex) */
+.perso {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--gris-vert);
+}
+.perso:last-child {
+  border-bottom: none;
+}
+.perso-infos {
+  flex: 1;
+}
+.perso-infos span {
+  color: var(--vert-clair);
+  font-size: 0.9rem;
+}
+
+/* Personnage : mode edition (bloc pleine largeur) */
+.perso-edition {
+  width: 100%;
+  padding: 16px 0;
+}
+
+/* Boutons */
+button {
+  background: var(--vert-moyen);
+  color: var(--blanc);
+  border: 2px solid var(--vert-moyen);
+  border-radius: 60px;
+  padding: 10px 28px;
+  margin: 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+button:hover { background: var(--vert-fonce); border-color: var(--vert-fonce); }
+button.secondaire { background: transparent; color: var(--vert-moyen); }
+button.secondaire:hover { background: var(--vert-tres-clair); }
+
+/* Groupe de boutons : espace au-dessus et entre */
+.btn-groupe {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* Bouton isole (seul sur sa ligne) : espace au-dessus */
+button.isole {
+  margin-top: 16px;
+}
+
+/* Bouton "Modifier" dans une ligne flex : pas de marge */
+.perso > button,
+.ligne-livre > button {
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
+/* Formulaires */
+label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 16px 0 6px;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 12px 16px;
+  font: inherit;
+  background: var(--beige-vert);
+  border: 2px solid var(--gris-vert);
+  border-radius: 30px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+textarea { border-radius: 20px; }
+input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--vert-moyen);
+  background: var(--blanc);
+}
+
+.dates {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0 16px;
+}
+
+/* Messages */
+.message {
+  margin: 16px 0;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 2px solid #4a90e2;
+  background-color: #eaf3fc;
+  color: #1a4a7a;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.message.erreur {
+  border: 2px solid #d93636;
+  background-color: #fdecec;
+  color: #8a1c1c;
+  animation: secousse 0.3s ease;
+}
+
+/* Champs en erreur */
+.champ-erreur {
+  border: 2px solid #d93636 !important;
+  background-color: #fdecec !important;
+  box-shadow: 0 0 0 3px rgba(217, 54, 54, 0.2);
+  animation: secousse 0.3s ease;
+}
+
+.champ-erreur:focus {
+  border-color: #4a90e2 !important;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+}
+
+@keyframes secousse {
+  0%   { transform: translateX(0); }
+  25%  { transform: translateX(-4px); }
+  50%  { transform: translateX(4px); }
+  75%  { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+
+.test-vivant {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.test-vivant input {
+  width: 90px;
+}
+
+.badge {
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.badge.vivant {
+  background: #e6f4ea;
+  color: #1e7e34;
+}
+
+.badge.mort {
+  background: #fdecea;
+  color: #b71c1c;
+}
+
+.badge.pas-ne {
+  background: #f0f0f0;
+  color: #666;
+}
