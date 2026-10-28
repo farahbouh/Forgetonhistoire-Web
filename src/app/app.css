@@ -186,3 +186,36 @@ input:focus, textarea:focus {
   75%  { transform: translateX(-2px); }
   100% { transform: translateX(0); }
 }
+
+.test-vivant {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.test-vivant input {
+  width: 90px;
+}
+
+.badge {
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.badge.vivant {
+  background: #e6f4ea;
+  color: #1e7e34;
+}
+
+.badge.mort {
+  background: #fdecea;
+  color: #b71c1c;
+}
+
+.badge.pas-ne {
+  background: #f0f0f0;
+  color: #666;
+}

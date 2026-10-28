@@ -12,67 +12,158 @@ type ZoneMessage = 'livre' | 'univers' | 'personnage' | 'global' | null;
   imports: [CommonModule, FormsModule],
   template: `
     <main class="page">
-    <h1>Forge ton histoire</h1>
+      <h1>Forge ton histoire</h1>
 
-    <!-- Boutons d'action principaux -->
-    <div class="btn-groupe">
-      <button (click)="creerlivre()">Creer un livre</button>
-      <button (click)="reprendrelivre()">Reprendre un livre</button>
-    </div>
-
-    <!-- Message global -->
-    <div *ngIf="message() && zoneMessage() === 'global'"
-         class="message" [class.erreur]="estErreur()">
-      {{ message() }}
-    </div>
-
-    <!-- LIVRE OUVERT -->
-    <div *ngIf="livreActive()" class="section">
-      <h2>{{ livreActive().nom }}</h2>
-      <p><em>{{ livreActive().type }}</em></p>
-      <p>{{ livreActive().description }}</p>
-      <button class="secondaire isole" (click)="fermerlivre()">Fermer</button>
-    </div>
-
-    <!-- UNIVERS DU LIVRE OUVERT -->
-    <div *ngIf="livreActive()" class="section">
-      <h2>Univers</h2>
-
-      <div *ngIf="univers().length === 0">
-        Aucun univers dans ce livre.
+      <!-- Boutons d'action principaux -->
+      <div class="btn-groupe">
+        <button (click)="creerlivre()">Creer un livre</button>
+        <button (click)="reprendrelivre()">Reprendre un livre</button>
       </div>
 
-      <div *ngFor="let u of univers()" class="carte">
-        <h3>{{ u.nom }} <em>({{ u.type }})</em></h3>
+      <!-- Message global -->
+      <div *ngIf="message() && zoneMessage() === 'global'"
+           class="message" [class.erreur]="estErreur()">
+        {{ message() }}
+      </div>
 
-        <!-- PERSONNAGES -->
-        <h4>Personnages</h4>
-        <div *ngIf="personnagesParUnivers()[u.id]?.length === 0">
-          Aucun personnage dans cet univers.
+      <!-- LIVRE OUVERT -->
+      <div *ngIf="livreActive()" class="section">
+        <h2>{{ livreActive().nom }}</h2>
+        <p><em>{{ livreActive().type }}</em></p>
+        <p>{{ livreActive().description }}</p>
+        <button class="secondaire isole" (click)="fermerlivre()">Fermer</button>
+      </div>
+
+      <!-- UNIVERS DU LIVRE OUVERT -->
+      <div *ngIf="livreActive()" class="section">
+        <h2>Univers</h2>
+
+        <div *ngIf="univers().length === 0">
+          Aucun univers dans ce livre.
         </div>
 
-        <!-- Liste des personnages : chaque personnage a deux modes (lecture / edition) -->
-        <div *ngFor="let p of personnagesParUnivers()[u.id]" class="perso">
-          <!-- MODE LECTURE -->
-          <ng-container *ngIf="personnageEnEdition() !== p.id">
-            <div class="perso-infos">
-              <strong>{{ p.prenom }} {{ p.nom }}</strong>
-              <span *ngIf="p.description"> - {{ p.description }}</span>
-              <span *ngIf="p.dateNaissance?.tabdate">
-                (né le {{ p.dateNaissance.tabdate[2].c }}/{{ p.dateNaissance.tabdate[1].c }}/{{ p.dateNaissance.tabdate[0].c }})
-              </span>
-              <span *ngIf="p.dateDeces?.tabdate">
-                (décédé le {{ p.dateDeces.tabdate[2].c }}/{{ p.dateDeces.tabdate[1].c }}/{{ p.dateDeces.tabdate[0].c }})
-              </span>
-            </div>
-            <button class="secondaire petit" (click)="ouvrirFormModifPersonnage(u.id, p)">
-              Modifier
-            </button>
-          </ng-container>
+        <div *ngFor="let u of univers()" class="carte">
+          <h3>{{ u.nom }} <em>({{ u.type }})</em></h3>
 
-          <!-- MODE EDITION -->
-          <div *ngIf="personnageEnEdition() === p.id" class="perso-edition">
-            <h5>Modifier {{ p.prenom }} {{ p.nom }}</h5>
+          <!-- PERSONNAGES -->
+          <h4>Personnages</h4>
+          <div *ngIf="personnagesParUnivers()[u.id]?.length === 0">
+            Aucun personnage dans cet univers.
+          </div>
+
+          <!-- Liste des personnages : chaque personnage a deux modes (lecture / edition) -->
+          <div *ngFor="let p of personnagesParUnivers()[u.id]" class="perso">
+            <!-- MODE LECTURE -->
+            <ng-container *ngIf="personnageEnEdition() !== p.id">
+              <div class="perso-infos">
+                <strong>{{ p.prenom }} {{ p.nom }}</strong>
+                <span *ngIf="p.description"> - {{ p.description }}</span>
+                <span *ngIf="p.dateNaissance?.tabdate">
+                  (né le {{ p.dateNaissance.tabdate[2].c }}/{{ p.dateNaissance.tabdate[1].c }}/{{ p.dateNaissance.tabdate[0].c }})
+                </span>
+                <span *ngIf="p.dateDeces?.tabdate">
+                  (décédé le {{ p.dateDeces.tabdate[2].c }}/{{ p.dateDeces.tabdate[1].c }}/{{ p.dateDeces.tabdate[0].c }}<ng-container *ngIf="ageAuDeces(p) !== null">, à l'âge de {{ ageAuDeces(p) }} ans</ng-container>)
+                </span>
+              </div>
+
+              <!-- TEST VIVANT / MORT A UNE ANNEE DONNEE -->
+              <div class="test-vivant">
+                <label>Vivant en l'an :</label>
+                <input type="number" [(ngModel)]="anneeTest[p.id]" placeholder="ex: 3019">
+
+                <span *ngIf="statut(p, anneeTest[p.id]) === 'pas-ne'" class="badge pas-ne">
+                  {{ texteAge(p, anneeTest[p.id]) || 'pas encore né' }}
+                </span>
+
+                <span *ngIf="statut(p, anneeTest[p.id]) === 'vivant'" class="badge vivant">
+                  {{ texteAge(p, anneeTest[p.id]) || 'vivant' }}
+                </span>
+
+                <span *ngIf="statut(p, anneeTest[p.id]) === 'mort'" class="badge mort">
+                  {{ texteAge(p, anneeTest[p.id]) || 'mort' }}
+                </span>
+              </div>
+
+              <button class="secondaire petit" (click)="ouvrirFormModifPersonnage(u.id, p)">
+                Modifier
+              </button>
+            </ng-container>
+
+            <!-- MODE EDITION -->
+            <div *ngIf="personnageEnEdition() === p.id" class="perso-edition">
+              <h5>Modifier {{ p.prenom }} {{ p.nom }}</h5>
+              <div>
+                <label>Nom</label>
+                <input [(ngModel)]="nouveauPersonnage.nom" placeholder="Baggins"
+                       (input)="champsEnErreur.set([])"
+                       [class.champ-erreur]="champsEnErreur().includes('persoNom')">
+              </div>
+              <div>
+                <label>Prénom</label>
+                <input [(ngModel)]="nouveauPersonnage.prenom" placeholder="Frodon"
+                       (input)="champsEnErreur.set([])"
+                       [class.champ-erreur]="champsEnErreur().includes('persoPrenom')">
+              </div>
+              <div>
+                <label>Description</label>
+                <input [(ngModel)]="nouveauPersonnage.description" placeholder="Porteur de l'Anneau">
+              </div>
+              <div class="dates">
+                <div>
+                  <label>Jour de naissance</label>
+                  <input type="number" [(ngModel)]="nouveauPersonnage.jour" placeholder="15"
+                         (input)="champsEnErreur.set([])"
+                         [class.champ-erreur]="champsEnErreur().includes('dateNaisJour')">
+                </div>
+                <div>
+                  <label>Mois de naissance</label>
+                  <input type="number" [(ngModel)]="nouveauPersonnage.mois" placeholder="6"
+                         (input)="champsEnErreur.set([])"
+                         [class.champ-erreur]="champsEnErreur().includes('dateNaisMois')">
+                </div>
+                <div>
+                  <label>Année de naissance</label>
+                  <input type="number" [(ngModel)]="nouveauPersonnage.annee" placeholder="2968"
+                         (input)="champsEnErreur.set([])"
+                         [class.champ-erreur]="champsEnErreur().includes('dateNaisAnnee')">
+                </div>
+              </div>
+              <div class="dates">
+                <div>
+                  <label>Jour de décès</label>
+                  <input type="number" [(ngModel)]="nouveauPersonnage.jourDeces"
+                         (input)="champsEnErreur.set([])"
+                         [class.champ-erreur]="champsEnErreur().includes('dateDecesJour')">
+                </div>
+                <div>
+                  <label>Mois de décès</label>
+                  <input type="number" [(ngModel)]="nouveauPersonnage.moisDeces"
+                         (input)="champsEnErreur.set([])"
+                         [class.champ-erreur]="champsEnErreur().includes('dateDecesMois')">
+                </div>
+                <div>
+                  <label>Année de décès</label>
+                  <input type="number" [(ngModel)]="nouveauPersonnage.anneeDeces"
+                         (input)="champsEnErreur.set([])"
+                         [class.champ-erreur]="champsEnErreur().includes('dateDecesAnnee')">
+                </div>
+              </div>
+
+              <div *ngIf="message() && zoneMessage() === 'personnage'"
+                   class="message" [class.erreur]="estErreur()">
+                {{ message() }}
+              </div>
+
+              <div class="btn-groupe">
+                <button (click)="enregistrerPersonnage(u.id)">Enregistrer</button>
+                <button class="secondaire" (click)="fermerFormPersonnage()">Annuler</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- FORMULAIRE CREATION PERSONNAGE -->
+          <div *ngIf="personnageEnCreation() && universEnCreation() === u.id" class="perso-edition">
+            <h5>Nouveau personnage dans {{ u.nom }}</h5>
             <div>
               <label>Nom</label>
               <input [(ngModel)]="nouveauPersonnage.nom" placeholder="Baggins"
@@ -136,157 +227,85 @@ type ZoneMessage = 'livre' | 'univers' | 'personnage' | 'global' | null;
             </div>
 
             <div class="btn-groupe">
-              <button (click)="enregistrerPersonnage(u.id)">Enregistrer</button>
+              <button (click)="enregistrerPersonnage(u.id)">Ajouter</button>
               <button class="secondaire" (click)="fermerFormPersonnage()">Annuler</button>
             </div>
           </div>
+
+          <button class="isole" (click)="ouvrirFormPersonnage(u.id)"
+                  *ngIf="!personnageEnCreation() || universEnCreation() !== u.id">
+            + Ajouter un personnage
+          </button>
         </div>
 
-        <!-- FORMULAIRE CREATION PERSONNAGE -->
-        <div *ngIf="personnageEnCreation() && universEnCreation() === u.id" class="perso-edition">
-          <h5>Nouveau personnage dans {{ u.nom }}</h5>
+        <button class="isole" (click)="showFormUnivers.set(true)" *ngIf="!showFormUnivers()">
+          + Nouvel univers
+        </button>
+
+        <div *ngIf="showFormUnivers()">
+          <h3>Ajouter un univers</h3>
           <div>
-            <label>Nom</label>
-            <input [(ngModel)]="nouveauPersonnage.nom" placeholder="Baggins"
+            <label>Nom *</label>
+            <input [(ngModel)]="nouvelUnivers.nom" placeholder="Terre du Milieu"
                    (input)="champsEnErreur.set([])"
-                   [class.champ-erreur]="champsEnErreur().includes('persoNom')">
+                   [class.champ-erreur]="champsEnErreur().includes('universNom')">
           </div>
           <div>
-            <label>Prénom</label>
-            <input [(ngModel)]="nouveauPersonnage.prenom" placeholder="Frodon"
-                   (input)="champsEnErreur.set([])"
-                   [class.champ-erreur]="champsEnErreur().includes('persoPrenom')">
-          </div>
-          <div>
-            <label>Description</label>
-            <input [(ngModel)]="nouveauPersonnage.description" placeholder="Porteur de l'Anneau">
-          </div>
-          <div class="dates">
-            <div>
-              <label>Jour de naissance</label>
-              <input type="number" [(ngModel)]="nouveauPersonnage.jour" placeholder="15"
-                     (input)="champsEnErreur.set([])"
-                     [class.champ-erreur]="champsEnErreur().includes('dateNaisJour')">
-            </div>
-            <div>
-              <label>Mois de naissance</label>
-              <input type="number" [(ngModel)]="nouveauPersonnage.mois" placeholder="6"
-                     (input)="champsEnErreur.set([])"
-                     [class.champ-erreur]="champsEnErreur().includes('dateNaisMois')">
-            </div>
-            <div>
-              <label>Année de naissance</label>
-              <input type="number" [(ngModel)]="nouveauPersonnage.annee" placeholder="2968"
-                     (input)="champsEnErreur.set([])"
-                     [class.champ-erreur]="champsEnErreur().includes('dateNaisAnnee')">
-            </div>
-          </div>
-          <div class="dates">
-            <div>
-              <label>Jour de décès</label>
-              <input type="number" [(ngModel)]="nouveauPersonnage.jourDeces"
-                     (input)="champsEnErreur.set([])"
-                     [class.champ-erreur]="champsEnErreur().includes('dateDecesJour')">
-            </div>
-            <div>
-              <label>Mois de décès</label>
-              <input type="number" [(ngModel)]="nouveauPersonnage.moisDeces"
-                     (input)="champsEnErreur.set([])"
-                     [class.champ-erreur]="champsEnErreur().includes('dateDecesMois')">
-            </div>
-            <div>
-              <label>Année de décès</label>
-              <input type="number" [(ngModel)]="nouveauPersonnage.anneeDeces"
-                     (input)="champsEnErreur.set([])"
-                     [class.champ-erreur]="champsEnErreur().includes('dateDecesAnnee')">
-            </div>
+            <label>Type</label>
+            <input [(ngModel)]="nouvelUnivers.type" placeholder="Fantastique">
           </div>
 
-          <div *ngIf="message() && zoneMessage() === 'personnage'"
+          <div *ngIf="message() && zoneMessage() === 'univers'"
                class="message" [class.erreur]="estErreur()">
             {{ message() }}
           </div>
 
           <div class="btn-groupe">
-            <button (click)="enregistrerPersonnage(u.id)">Ajouter</button>
-            <button class="secondaire" (click)="fermerFormPersonnage()">Annuler</button>
+            <button (click)="ajouterUnivers()">Ajouter</button>
+            <button class="secondaire" (click)="showFormUnivers.set(false)">Annuler</button>
           </div>
         </div>
-
-        <button class="isole" (click)="ouvrirFormPersonnage(u.id)"
-                *ngIf="!personnageEnCreation() || universEnCreation() !== u.id">
-          + Ajouter un personnage
-        </button>
       </div>
 
-      <button class="isole" (click)="showFormUnivers.set(true)" *ngIf="!showFormUnivers()">
-        + Nouvel univers
-      </button>
+      <!-- CHOIX D'UN LIVRE -->
+      <div *ngIf="showSelection()" class="section">
+        <h2>Choisir un livre</h2>
+        <div *ngIf="livres().length === 0">Aucun livre disponible.</div>
+        <div *ngFor="let livre of livres()" class="ligne-livre">
+          <span><strong>{{ livre.nom }}</strong> - {{ livre.type }}</span>
+          <button (click)="ouvrirlivre(livre)">Reprendre</button>
+        </div>
+        <button class="secondaire isole" (click)="annulerSelection()">Annuler</button>
+      </div>
 
-      <div *ngIf="showFormUnivers()">
-        <h3>Ajouter un univers</h3>
+      <!-- FORMULAIRE LIVRE -->
+      <div *ngIf="showForm()" class="section">
+        <h2>Ajouter un livre</h2>
         <div>
-          <label>Nom *</label>
-          <input [(ngModel)]="nouvelUnivers.nom" placeholder="Terre du Milieu"
+          <label>Titre *</label>
+          <input [(ngModel)]="nouvellelivre.nom" placeholder="Titre"
                  (input)="champsEnErreur.set([])"
-                 [class.champ-erreur]="champsEnErreur().includes('universNom')">
+                 [class.champ-erreur]="champsEnErreur().includes('nom')">
         </div>
         <div>
           <label>Type</label>
-          <input [(ngModel)]="nouvelUnivers.type" placeholder="Fantastique">
+          <input [(ngModel)]="nouvellelivre.type" placeholder="Ex: Roman">
+        </div>
+        <div>
+          <label>Description</label>
+          <textarea [(ngModel)]="nouvellelivre.description" rows="3"></textarea>
         </div>
 
-        <div *ngIf="message() && zoneMessage() === 'univers'"
+        <div *ngIf="message() && zoneMessage() === 'livre'"
              class="message" [class.erreur]="estErreur()">
           {{ message() }}
         </div>
 
         <div class="btn-groupe">
-          <button (click)="ajouterUnivers()">Ajouter</button>
-          <button class="secondaire" (click)="showFormUnivers.set(false)">Annuler</button>
+          <button (click)="ajouterlivre()">Ajouter</button>
+          <button class="secondaire" (click)="annulerAjout()">Annuler</button>
         </div>
       </div>
-    </div>
-
-    <!-- CHOIX D'UN LIVRE -->
-    <div *ngIf="showSelection()" class="section">
-      <h2>Choisir un livre</h2>
-      <div *ngIf="livres().length === 0">Aucun livre disponible.</div>
-      <div *ngFor="let livre of livres()" class="ligne-livre">
-        <span><strong>{{ livre.nom }}</strong> - {{ livre.type }}</span>
-        <button (click)="ouvrirlivre(livre)">Reprendre</button>
-      </div>
-      <button class="secondaire isole" (click)="annulerSelection()">Annuler</button>
-    </div>
-
-    <!-- FORMULAIRE LIVRE -->
-    <div *ngIf="showForm()" class="section">
-      <h2>Ajouter un livre</h2>
-      <div>
-        <label>Titre *</label>
-        <input [(ngModel)]="nouvellelivre.nom" placeholder="Titre"
-               (input)="champsEnErreur.set([])"
-               [class.champ-erreur]="champsEnErreur().includes('nom')">
-      </div>
-      <div>
-        <label>Type</label>
-        <input [(ngModel)]="nouvellelivre.type" placeholder="Ex: Roman">
-      </div>
-      <div>
-        <label>Description</label>
-        <textarea [(ngModel)]="nouvellelivre.description" rows="3"></textarea>
-      </div>
-
-      <div *ngIf="message() && zoneMessage() === 'livre'"
-           class="message" [class.erreur]="estErreur()">
-        {{ message() }}
-      </div>
-
-      <div class="btn-groupe">
-        <button (click)="ajouterlivre()">Ajouter</button>
-        <button class="secondaire" (click)="annulerAjout()">Annuler</button>
-      </div>
-    </div>
     </main>
   `,
   styleUrl: './app.css'
@@ -306,6 +325,9 @@ export class App {
   livreActive = signal<any>(null);
   univers = signal<any[]>([]);
   personnagesParUnivers = signal<{ [universId: number]: any[] }>({});
+
+  // Année testée par personnage (clé = id du personnage)
+  anneeTest: { [personnageId: number]: number | null } = {};
 
   // États d'interface
   showForm = signal(false);
@@ -335,6 +357,65 @@ export class App {
       jour: null as number | null, mois: null as number | null, annee: null as number | null,
       jourDeces: null as number | null, moisDeces: null as number | null, anneeDeces: null as number | null
     };
+  }
+
+  // Âge au décès (null si les deux dates ne sont pas renseignées)
+  ageAuDeces(p: any): number | null {
+    const nais = p.dateNaissance?.tabdate?.[0]?.c;
+    const deces = p.dateDeces?.tabdate?.[0]?.c;
+    if (nais == null || deces == null) return null;
+    return deces - nais;
+  }
+
+  // Retourne 'pas-ne', 'vivant', 'mort' ou null (si aucune année saisie)
+  // Convention : mort à partir de l'année de décès incluse
+  statut(p: any, annee: number | null): 'pas-ne' | 'vivant' | 'mort' | null {
+    if (annee == null) return null;
+    const nais = p.dateNaissance?.tabdate?.[0]?.c;
+    const deces = p.dateDeces?.tabdate?.[0]?.c;
+
+    // Pas encore né
+    if (nais != null && annee < nais) return 'pas-ne';
+
+    // Mort à partir de l'année de décès incluse
+    if (deces != null && annee >= deces) return 'mort';
+
+    // Vivant
+    return 'vivant';
+  }
+
+  // Texte d'âge adapté aux 3 statuts
+  texteAge(p: any, annee: number | null): string {
+    if (annee == null) return '';
+
+    const nais = p.dateNaissance?.tabdate?.[0]?.c;
+    const deces = p.dateDeces?.tabdate?.[0]?.c;
+
+    const statut = this.statut(p, annee);
+
+    // Pas encore né
+    if (statut === 'pas-ne' && nais != null) {
+      const dansN = nais - annee;
+      return `naîtra dans ${dansN} an${dansN > 1 ? 's' : ''}`;
+    }
+
+    // Mort
+    if (statut === 'mort') {
+      // Mort pendant l'année de décès → âge au décès
+      if (deces != null && annee === deces && nais != null) {
+        return `mort à ${deces - nais} ans`;
+      }
+      return '';
+    }
+
+    // Vivant
+    if (nais != null) {
+      const age = annee - nais;
+      if (age === 0) return 'né cette année';
+      return `${age} ans cette année`;
+    }
+
+    return '';
   }
 
   private reset() {
@@ -562,7 +643,6 @@ export class App {
     const url = `${this.apiUrl}/api/personnages?universId=${universId}`;
 
     if (idEdition !== null) {
-      // Modification
       const payload = { ...this.nouveauPersonnage, id: idEdition };
       this.envoyer('PUT', url, payload, () => {
         this.personnageEnEdition.set(null);
@@ -571,7 +651,6 @@ export class App {
         this.afficher('Personnage modifié', 'global');
       }, 'personnage');
     } else {
-      // Creation
       this.envoyer('POST', url, this.nouveauPersonnage, () => {
         this.personnageEnCreation.set(false);
         this.universEnCreation.set(null);
