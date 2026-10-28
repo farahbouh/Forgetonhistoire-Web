@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
+// Zones possibles pour afficher un message : chaque formulaire a la sienne + une zone globale
+type ZoneMessage = 'livre' | 'univers' | 'personnage' | 'global' | null;
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -11,25 +14,28 @@ import { FormsModule } from '@angular/forms';
     <main class="page">
     <h1>Forge ton histoire</h1>
 
-    <div>
+    <!-- Boutons d'action principaux -->
+    <div class="btn-groupe">
       <button (click)="creerlivre()">Creer un livre</button>
       <button (click)="reprendrelivre()">Reprendre un livre</button>
     </div>
 
-    <div *ngIf="message()" class="message" [class.erreur]="estErreur()">
+    <!-- Message global -->
+    <div *ngIf="message() && zoneMessage() === 'global'"
+         class="message" [class.erreur]="estErreur()">
       {{ message() }}
     </div>
 
     <!-- LIVRE OUVERT -->
-    <div *ngIf="livreActive()">
+    <div *ngIf="livreActive()" class="section">
       <h2>{{ livreActive().nom }}</h2>
       <p><em>{{ livreActive().type }}</em></p>
       <p>{{ livreActive().description }}</p>
-      <button class="secondaire" (click)="fermerlivre()">Fermer</button>
+      <button class="secondaire isole" (click)="fermerlivre()">Fermer</button>
     </div>
 
     <!-- UNIVERS DU LIVRE OUVERT -->
-    <div *ngIf="livreActive()">
+    <div *ngIf="livreActive()" class="section">
       <h2>Univers</h2>
 
       <div *ngIf="univers().length === 0">
@@ -44,26 +50,101 @@ import { FormsModule } from '@angular/forms';
         <div *ngIf="personnagesParUnivers()[u.id]?.length === 0">
           Aucun personnage dans cet univers.
         </div>
+
+        <!-- Liste des personnages : chaque personnage a deux modes (lecture / edition) -->
         <div *ngFor="let p of personnagesParUnivers()[u.id]" class="perso">
-          <strong>{{ p.prenom }} {{ p.nom }}</strong> - <span>{{ p.description }}</span>
-          <span *ngIf="p.dateNaissance?.tabdate">
-            (né le {{ p.dateNaissance.tabdate[2].c }}/{{ p.dateNaissance.tabdate[1].c }}/{{ p.dateNaissance.tabdate[0].c }})
-          </span>
-          <span *ngIf="p.dateDeces?.tabdate">
-            (décédé le {{ p.dateDeces.tabdate[2].c }}/{{ p.dateDeces.tabdate[1].c }}/{{ p.dateDeces.tabdate[0].c }})
-          </span>
-          <button class="secondaire petit" (click)="ouvrirFormModifPersonnage(u.id, p)">
-            Modifier
-          </button>
+          <!-- MODE LECTURE -->
+          <ng-container *ngIf="personnageEnEdition() !== p.id">
+            <div class="perso-infos">
+              <strong>{{ p.prenom }} {{ p.nom }}</strong>
+              <span *ngIf="p.description"> - {{ p.description }}</span>
+              <span *ngIf="p.dateNaissance?.tabdate">
+                (né le {{ p.dateNaissance.tabdate[2].c }}/{{ p.dateNaissance.tabdate[1].c }}/{{ p.dateNaissance.tabdate[0].c }})
+              </span>
+              <span *ngIf="p.dateDeces?.tabdate">
+                (décédé le {{ p.dateDeces.tabdate[2].c }}/{{ p.dateDeces.tabdate[1].c }}/{{ p.dateDeces.tabdate[0].c }})
+              </span>
+            </div>
+            <button class="secondaire petit" (click)="ouvrirFormModifPersonnage(u.id, p)">
+              Modifier
+            </button>
+          </ng-container>
+
+          <!-- MODE EDITION -->
+          <div *ngIf="personnageEnEdition() === p.id" class="perso-edition">
+            <h5>Modifier {{ p.prenom }} {{ p.nom }}</h5>
+            <div>
+              <label>Nom</label>
+              <input [(ngModel)]="nouveauPersonnage.nom" placeholder="Baggins"
+                     (input)="champsEnErreur.set([])"
+                     [class.champ-erreur]="champsEnErreur().includes('persoNom')">
+            </div>
+            <div>
+              <label>Prénom</label>
+              <input [(ngModel)]="nouveauPersonnage.prenom" placeholder="Frodon"
+                     (input)="champsEnErreur.set([])"
+                     [class.champ-erreur]="champsEnErreur().includes('persoPrenom')">
+            </div>
+            <div>
+              <label>Description</label>
+              <input [(ngModel)]="nouveauPersonnage.description" placeholder="Porteur de l'Anneau">
+            </div>
+            <div class="dates">
+              <div>
+                <label>Jour de naissance</label>
+                <input type="number" [(ngModel)]="nouveauPersonnage.jour" placeholder="15"
+                       (input)="champsEnErreur.set([])"
+                       [class.champ-erreur]="champsEnErreur().includes('dateNaisJour')">
+              </div>
+              <div>
+                <label>Mois de naissance</label>
+                <input type="number" [(ngModel)]="nouveauPersonnage.mois" placeholder="6"
+                       (input)="champsEnErreur.set([])"
+                       [class.champ-erreur]="champsEnErreur().includes('dateNaisMois')">
+              </div>
+              <div>
+                <label>Année de naissance</label>
+                <input type="number" [(ngModel)]="nouveauPersonnage.annee" placeholder="2968"
+                       (input)="champsEnErreur.set([])"
+                       [class.champ-erreur]="champsEnErreur().includes('dateNaisAnnee')">
+              </div>
+            </div>
+            <div class="dates">
+              <div>
+                <label>Jour de décès</label>
+                <input type="number" [(ngModel)]="nouveauPersonnage.jourDeces"
+                       (input)="champsEnErreur.set([])"
+                       [class.champ-erreur]="champsEnErreur().includes('dateDecesJour')">
+              </div>
+              <div>
+                <label>Mois de décès</label>
+                <input type="number" [(ngModel)]="nouveauPersonnage.moisDeces"
+                       (input)="champsEnErreur.set([])"
+                       [class.champ-erreur]="champsEnErreur().includes('dateDecesMois')">
+              </div>
+              <div>
+                <label>Année de décès</label>
+                <input type="number" [(ngModel)]="nouveauPersonnage.anneeDeces"
+                       (input)="champsEnErreur.set([])"
+                       [class.champ-erreur]="champsEnErreur().includes('dateDecesAnnee')">
+              </div>
+            </div>
+
+            <div *ngIf="message() && zoneMessage() === 'personnage'"
+                 class="message" [class.erreur]="estErreur()">
+              {{ message() }}
+            </div>
+
+            <div class="btn-groupe">
+              <button (click)="enregistrerPersonnage(u.id)">Enregistrer</button>
+              <button class="secondaire" (click)="fermerFormPersonnage()">Annuler</button>
+            </div>
+          </div>
         </div>
 
-        <button (click)="ouvrirFormPersonnage(u.id)">
-          + Ajouter un personnage
-        </button>
-
-        <!-- FORMULAIRE PERSONNAGE -->
-        <div *ngIf="showFormPersonnage() === u.id">
-          <h5>{{ personnageEnEdition() === null ? 'Nouveau' : 'Modifier le' }} personnage dans {{ u.nom }}</h5>
+        <!-- FORMULAIRE CREATION PERSONNAGE -->
+        <div *ngIf="personnageEnCreation() && universEnCreation() === u.id" class="perso-edition">
+          <h5>Nouveau personnage dans {{ u.nom }}</h5>
           <div>
             <label>Nom</label>
             <input [(ngModel)]="nouveauPersonnage.nom" placeholder="Baggins"
@@ -120,14 +201,25 @@ import { FormsModule } from '@angular/forms';
                      [class.champ-erreur]="champsEnErreur().includes('dateDecesAnnee')">
             </div>
           </div>
-          <button (click)="enregistrerPersonnage(u.id)">
-            {{ personnageEnEdition() === null ? 'Ajouter' : 'Enregistrer' }}
-          </button>
-          <button class="secondaire" (click)="fermerFormPersonnage()">Annuler</button>
+
+          <div *ngIf="message() && zoneMessage() === 'personnage'"
+               class="message" [class.erreur]="estErreur()">
+            {{ message() }}
+          </div>
+
+          <div class="btn-groupe">
+            <button (click)="enregistrerPersonnage(u.id)">Ajouter</button>
+            <button class="secondaire" (click)="fermerFormPersonnage()">Annuler</button>
+          </div>
         </div>
+
+        <button class="isole" (click)="ouvrirFormPersonnage(u.id)"
+                *ngIf="!personnageEnCreation() || universEnCreation() !== u.id">
+          + Ajouter un personnage
+        </button>
       </div>
 
-      <button (click)="showFormUnivers.set(true)" *ngIf="!showFormUnivers()">
+      <button class="isole" (click)="showFormUnivers.set(true)" *ngIf="!showFormUnivers()">
         + Nouvel univers
       </button>
 
@@ -143,24 +235,32 @@ import { FormsModule } from '@angular/forms';
           <label>Type</label>
           <input [(ngModel)]="nouvelUnivers.type" placeholder="Fantastique">
         </div>
-        <button (click)="ajouterUnivers()">Ajouter</button>
-        <button class="secondaire" (click)="showFormUnivers.set(false)">Annuler</button>
+
+        <div *ngIf="message() && zoneMessage() === 'univers'"
+             class="message" [class.erreur]="estErreur()">
+          {{ message() }}
+        </div>
+
+        <div class="btn-groupe">
+          <button (click)="ajouterUnivers()">Ajouter</button>
+          <button class="secondaire" (click)="showFormUnivers.set(false)">Annuler</button>
+        </div>
       </div>
     </div>
 
     <!-- CHOIX D'UN LIVRE -->
-    <div *ngIf="showSelection()">
+    <div *ngIf="showSelection()" class="section">
       <h2>Choisir un livre</h2>
       <div *ngIf="livres().length === 0">Aucun livre disponible.</div>
-      <div *ngFor="let livre of livres()">
-        <strong>{{ livre.nom }}</strong> - <span>{{ livre.type }}</span>
+      <div *ngFor="let livre of livres()" class="ligne-livre">
+        <span><strong>{{ livre.nom }}</strong> - {{ livre.type }}</span>
         <button (click)="ouvrirlivre(livre)">Reprendre</button>
       </div>
-      <button class="secondaire" (click)="annulerSelection()">Annuler</button>
+      <button class="secondaire isole" (click)="annulerSelection()">Annuler</button>
     </div>
 
     <!-- FORMULAIRE LIVRE -->
-    <div *ngIf="showForm()">
+    <div *ngIf="showForm()" class="section">
       <h2>Ajouter un livre</h2>
       <div>
         <label>Titre *</label>
@@ -176,8 +276,16 @@ import { FormsModule } from '@angular/forms';
         <label>Description</label>
         <textarea [(ngModel)]="nouvellelivre.description" rows="3"></textarea>
       </div>
-      <button (click)="ajouterlivre()">Ajouter</button>
-      <button class="secondaire" (click)="annulerAjout()">Annuler</button>
+
+      <div *ngIf="message() && zoneMessage() === 'livre'"
+           class="message" [class.erreur]="estErreur()">
+        {{ message() }}
+      </div>
+
+      <div class="btn-groupe">
+        <button (click)="ajouterlivre()">Ajouter</button>
+        <button class="secondaire" (click)="annulerAjout()">Annuler</button>
+      </div>
     </div>
     </main>
   `,
@@ -187,22 +295,30 @@ export class App {
   private apiUrl = 'http://localhost:8080';
   private http = inject(HttpClient);
 
-  // État
+  // État global des messages
   message = signal('');
+  zoneMessage = signal<ZoneMessage>(null);
   estErreur = computed(() => /erreur|incoh|obligatoire/i.test(this.message()));
   champsEnErreur = signal<string[]>([]);
 
+  // Données
   livres = signal<any[]>([]);
   livreActive = signal<any>(null);
   univers = signal<any[]>([]);
   personnagesParUnivers = signal<{ [universId: number]: any[] }>({});
 
+  // États d'interface
   showForm = signal(false);
   showSelection = signal(false);
   showFormUnivers = signal(false);
-  showFormPersonnage = signal<number | null>(null);
-  personnageEnEdition = signal<number | null>(null);
 
+  // Edition inline d'un personnage (id du personnage en édition, null sinon)
+  personnageEnEdition = signal<number | null>(null);
+  // Création d'un personnage (id de l'univers concerné, null sinon)
+  personnageEnCreation = signal<boolean>(false);
+  universEnCreation = signal<number | null>(null);
+
+  // Modèles de formulaire
   nouvellelivre = { nom: '', type: 'Roman', description: '' };
   nouvelUnivers = { nom: '', type: '' };
   nouveauPersonnage = this.personnageVide();
@@ -221,16 +337,20 @@ export class App {
     };
   }
 
-  // Efface les messages et les champs en erreur
   private reset() {
     this.champsEnErreur.set([]);
     this.message.set('');
+    this.zoneMessage.set(null);
   }
 
-  // Gère une erreur de requête
-  private gererErreur(err: any) {
-    const msg = err.error?.erreur ?? 'Erreur: ' + err.message;
+  private afficher(msg: string, zone: ZoneMessage) {
     this.message.set(msg);
+    this.zoneMessage.set(zone);
+  }
+
+  private gererErreur(err: any, zone: ZoneMessage = 'global') {
+    const msg = err.error?.erreur ?? 'Erreur: ' + err.message;
+    this.afficher(msg, zone);
     if (/incoh/i.test(msg)) {
       this.champsEnErreur.set([
         'dateNaisJour', 'dateNaisMois', 'dateNaisAnnee',
@@ -239,18 +359,20 @@ export class App {
     }
   }
 
-  // Envoie une requête HTTP (POST ou PUT) et gère succès/erreur
-  private envoyer(methode: 'POST' | 'PUT', url: string, payload: any, onSuccess: () => void) {
-    let requete;
-    if (methode === 'PUT') {
-      requete = this.http.put(url, payload);
-    } else {
-      requete = this.http.post(url, payload);
-    }
+  private envoyer(
+    methode: 'POST' | 'PUT',
+    url: string,
+    payload: any,
+    onSuccess: () => void,
+    zone: ZoneMessage = 'global'
+  ) {
+    const requete = methode === 'PUT'
+      ? this.http.put(url, payload)
+      : this.http.post(url, payload);
 
     requete.subscribe({
       next: onSuccess,
-      error: (err) => this.gererErreur(err)
+      error: (err) => this.gererErreur(err, zone)
     });
   }
 
@@ -260,29 +382,29 @@ export class App {
     this.showForm.set(true);
     this.showSelection.set(false);
     this.fermerLivreInterne();
-    this.message.set('Formulaire ajout livre');
     this.nouvellelivre = { nom: '', type: 'Roman', description: '' };
     this.reset();
+    this.afficher('Formulaire ajout livre', 'livre');
   }
 
   reprendrelivre() {
     this.showForm.set(false);
     this.fermerLivreInterne();
     this.showSelection.set(true);
-    this.message.set('Choisissez un livre');
+    this.afficher('Choisissez un livre', 'global');
     this.chargerLivres();
   }
 
   ouvrirlivre(livre: any) {
     this.livreActive.set(livre);
     this.showSelection.set(false);
-    this.message.set(`Livre "${livre.nom}" ouvert`);
+    this.afficher(`Livre "${livre.nom}" ouvert`, 'global');
     this.chargerUniversDuLivre(livre.id);
   }
 
   fermerlivre() {
     this.fermerLivreInterne();
-    this.message.set('Livre fermé');
+    this.afficher('Livre fermé', 'global');
   }
 
   private fermerLivreInterne() {
@@ -290,48 +412,49 @@ export class App {
     this.univers.set([]);
     this.personnagesParUnivers.set({});
     this.showFormUnivers.set(false);
-    this.showFormPersonnage.set(null);
     this.personnageEnEdition.set(null);
+    this.personnageEnCreation.set(false);
+    this.universEnCreation.set(null);
     this.reset();
   }
 
   annulerAjout() {
     this.showForm.set(false);
-    this.message.set('Ajout annulé');
     this.reset();
   }
 
   annulerSelection() {
     this.showSelection.set(false);
-    this.message.set('');
+    this.reset();
   }
 
   // Livres
 
   ajouterlivre() {
     if (!this.nouvellelivre.nom.trim()) {
-      this.message.set('Titre obligatoire');
+      this.afficher('Titre obligatoire', 'livre');
       this.champsEnErreur.set(['nom']);
       return;
     }
     this.reset();
 
     this.envoyer('POST', `${this.apiUrl}/api/livres`, this.nouvellelivre, () => {
-      this.message.set('Livre ajouté');
       this.showForm.set(false);
-      this.chargerLivres();
       this.nouvellelivre = { nom: '', type: 'Roman', description: '' };
-    });
+      this.chargerLivres();
+      this.afficher('Livre ajouté', 'global');
+    }, 'livre');
   }
 
   chargerLivres() {
-    this.message.set('Chargement livres...');
     this.http.get(`${this.apiUrl}/api/livres`).subscribe({
       next: (data: any) => {
         this.livres.set(data);
-        this.message.set(`${data.length} livre(s)`);
+        if (!this.zoneMessage() || this.zoneMessage() === 'global') {
+          this.afficher(`${data.length} livre(s)`, 'global');
+        }
       },
-      error: (err) => this.gererErreur(err)
+      error: (err) => this.gererErreur(err, 'global')
     });
   }
 
@@ -345,13 +468,13 @@ export class App {
           this.chargerPersonnagesDeUnivers(u.id);
         }
       },
-      error: (err) => this.gererErreur(err)
+      error: (err) => this.gererErreur(err, 'global')
     });
   }
 
   ajouterUnivers() {
     if (!this.nouvelUnivers.nom.trim()) {
-      this.message.set('Nom obligatoire');
+      this.afficher('Nom obligatoire', 'univers');
       this.champsEnErreur.set(['universNom']);
       return;
     }
@@ -362,11 +485,11 @@ export class App {
 
     const url = `${this.apiUrl}/api/univers?livreId=${livre.id}`;
     this.envoyer('POST', url, this.nouvelUnivers, () => {
-      this.message.set('Univers ajouté');
       this.showFormUnivers.set(false);
       this.nouvelUnivers = { nom: '', type: '' };
       this.chargerUniversDuLivre(livre.id);
-    });
+      this.afficher('Univers ajouté', 'global');
+    }, 'univers');
   }
 
   // Personnages
@@ -378,22 +501,25 @@ export class App {
         copie[universId] = data;
         this.personnagesParUnivers.set(copie);
       },
-      error: (err) => this.gererErreur(err)
+      error: (err) => this.gererErreur(err, 'global')
     });
   }
 
+  // Ouvre le formulaire de creation de personnage pour un univers
   ouvrirFormPersonnage(universId: number) {
-    this.showFormPersonnage.set(universId);
     this.personnageEnEdition.set(null);
+    this.personnageEnCreation.set(true);
+    this.universEnCreation.set(universId);
     this.nouveauPersonnage = this.personnageVide();
     this.reset();
   }
 
+  // Ouvre l'edition inline d'un personnage existant
   ouvrirFormModifPersonnage(universId: number, p: any) {
-    this.showFormPersonnage.set(universId);
     this.personnageEnEdition.set(p.id);
+    this.personnageEnCreation.set(false);
+    this.universEnCreation.set(null);
 
-    // Récupère les dates depuis tabdate (ordre : année, mois, jour)
     const nais = p.dateNaissance?.tabdate;
     const deces = p.dateDeces?.tabdate;
 
@@ -411,24 +537,22 @@ export class App {
     this.reset();
   }
 
+  // Ferme l'edition ou la creation de personnage
   fermerFormPersonnage() {
-    this.showFormPersonnage.set(null);
     this.personnageEnEdition.set(null);
+    this.personnageEnCreation.set(false);
+    this.universEnCreation.set(null);
     this.reset();
   }
 
+  // Valide et envoie la creation ou la modification d'un personnage
   enregistrerPersonnage(universId: number) {
-    // Validation
     const erreurs: string[] = [];
-    if (!this.nouveauPersonnage.nom.trim()) {
-      erreurs.push('persoNom');
-    }
-    if (!this.nouveauPersonnage.prenom.trim()) {
-      erreurs.push('persoPrenom');
-    }
+    if (!this.nouveauPersonnage.nom.trim()) erreurs.push('persoNom');
+    if (!this.nouveauPersonnage.prenom.trim()) erreurs.push('persoPrenom');
 
     if (erreurs.length > 0) {
-      this.message.set('Nom et prenom obligatoires');
+      this.afficher('Nom et prenom obligatoires', 'personnage');
       this.champsEnErreur.set(erreurs);
       return;
     }
@@ -438,33 +562,23 @@ export class App {
     const url = `${this.apiUrl}/api/personnages?universId=${universId}`;
 
     if (idEdition !== null) {
-      // Modification : on ajoute l'id au payload et on envoie un PUT
+      // Modification
       const payload = { ...this.nouveauPersonnage, id: idEdition };
       this.envoyer('PUT', url, payload, () => {
-        this.message.set('Personnage modifié');
-        this.showFormPersonnage.set(null);
         this.personnageEnEdition.set(null);
         this.nouveauPersonnage = this.personnageVide();
         this.chargerPersonnagesDeUnivers(universId);
-      });
+        this.afficher('Personnage modifié', 'global');
+      }, 'personnage');
     } else {
-      // Création : on envoie un POST
+      // Creation
       this.envoyer('POST', url, this.nouveauPersonnage, () => {
-        this.message.set('Personnage ajouté');
-        this.showFormPersonnage.set(null);
+        this.personnageEnCreation.set(false);
+        this.universEnCreation.set(null);
         this.nouveauPersonnage = this.personnageVide();
         this.chargerPersonnagesDeUnivers(universId);
-      });
+        this.afficher('Personnage ajouté', 'global');
+      }, 'personnage');
     }
-  }
-
-  // Test
-
-  testerConnexion() {
-    this.message.set('Test connexion...');
-    this.http.get(`${this.apiUrl}/test`, { responseType: 'text' }).subscribe({
-      next: () => this.message.set('Connexion OK'),
-      error: () => this.message.set('Erreur connexion')
-    });
   }
 }
