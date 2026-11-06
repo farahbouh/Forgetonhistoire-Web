@@ -64,6 +64,7 @@ Le projet est réparti sur deux dépôts :
 - [x] Modifier un personnage directement dans la liste, sans changer de page
 - [x] Renseigner une date de naissance et une date de décès (jour, mois, année), affichées au format jj/mm/aaaa
 - [x] Afficher l'âge au décès à côté de la date de décès
+- [x] Supprimer un personnage
 
 ### Cohérence des données
 
@@ -81,7 +82,6 @@ La logique de cohérence est géré par l'[API Java](https://github.com/farahbou
 ### Prévu
 **Gestion du contenu existant**
 
-- [ ] Supprimer un personnage
 - [ ] Modifier et supprimer un livre ou un univers
 
 **Lieux**

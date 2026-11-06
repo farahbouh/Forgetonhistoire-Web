@@ -28,3 +28,4 @@ Thumbs.db
 
 # Fichiers temporaires
 arborescence.txt
+*.bak

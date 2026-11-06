@@ -184,4 +184,22 @@ export class PersonnageComponent implements OnInit {
       }, 'personnage');
     }
   }
+
+  // Supprime un personnage apres confirmation
+  supprimerPersonnage(p: any) {
+    const nomComplet = `${p.prenom} ${p.nom}`.trim();
+    if (!confirm(`Supprimer le personnage "${nomComplet}" ?`)) return;
+
+    this.api.envoyer(
+      'DELETE',
+      `/api/personnages?universId=${this.univers().id}&id=${p.id}`,
+      null,
+      () => {
+        this.charger();
+        this.messages.afficher('Personnage supprime', 'global');
+      },
+      'personnage'
+    );
+  }
+
 }

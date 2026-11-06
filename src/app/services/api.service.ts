@@ -16,16 +16,16 @@ export class ApiService {
   }
 
   envoyer(
-    methode: 'POST' | 'PUT',
+    methode: 'POST' | 'PUT' | 'DELETE',
     chemin: string,
     payload: any,
     onSuccess: () => void,
     zone: ZoneMessage = 'global'
   ) {
     const url = `${this.apiUrl}${chemin}`;
-    const requete = methode === 'PUT'
-      ? this.http.put(url, payload)
-      : this.http.post(url, payload);
+    const requete = this.http.request(methode, url, {
+      body: methode === 'DELETE' ? null : payload
+    });
 
     requete.subscribe({
       next: onSuccess,
