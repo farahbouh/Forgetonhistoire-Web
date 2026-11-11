@@ -4,12 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { MessageService } from '../../services/message.service';
 import { MessageComponent } from '../message/message.component';
-import { PersonnageComponent } from '../personnage/personnage.component';
+import { UniversComponent } from '../univers/univers.component';
 
 @Component({
   selector: 'app-livre',
   standalone: true,
-  imports: [CommonModule, FormsModule, MessageComponent, PersonnageComponent],
+  imports: [CommonModule, FormsModule, MessageComponent, UniversComponent],
   templateUrl: './livre.component.html',
   styleUrl: './livre.component.css'
 })
@@ -18,17 +18,14 @@ export class LivreComponent {
   private messages = inject(MessageService);
   champsEnErreur = this.messages.champsEnErreur;
 
-  // Données
   livres = signal<any[]>([]);
   livreActive = signal<any>(null);
   univers = signal<any[]>([]);
 
-  // États d'interface
   showForm = signal(false);
   showSelection = signal(false);
   showFormUnivers = signal(false);
 
-  // Modèles de formulaire
   nouvellelivre = { nom: '', type: 'Roman', description: '' };
   nouvelUnivers = { nom: '', type: '' };
 
@@ -36,10 +33,7 @@ export class LivreComponent {
     this.chargerLivres();
   }
 
-  // Garde les composants personnage existants quand la liste d'univers est rechargée
   trackById = (_: number, u: any) => u.id;
-
-  // Actions principales
 
   creerlivre() {
     this.showForm.set(true);
@@ -87,8 +81,6 @@ export class LivreComponent {
     this.messages.reset();
   }
 
-  // Livres
-
   ajouterlivre() {
     if (!this.nouvellelivre.nom.trim()) {
       this.messages.afficher('Titre obligatoire', 'livre');
@@ -114,8 +106,6 @@ export class LivreComponent {
       }
     });
   }
-
-  // Univers (les personnages sont gérés par <app-personnage>)
 
   chargerUniversDuLivre(livreId: number) {
     this.api.get<any[]>(`/api/univers?livreId=${livreId}`, (data) => this.univers.set(data));
