@@ -20,7 +20,11 @@
   </div>
 
   <div *ngFor="let u of univers(); trackBy: trackById">
-    <app-univers [univers]="u" />
+    <app-univers
+      [univers]="u"
+      [livre]="livreActive()"
+      (rafraichir)="chargerUniversDuLivre(livreActive().id)"
+    />
   </div>
 
   <button class="isole" (click)="showFormUnivers.set(true)" *ngIf="!showFormUnivers()">
