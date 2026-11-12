@@ -11,7 +11,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
 ![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow?logo=conventionalcommits)
 
-[Dépôt de l'API Java](https://github.com/farahbouh/Forgetonhistoire) · [Installation](#mise-en-place) · [Feuille de route](#feuille-de-route) · [Signaler un bug](../../issues)
+[Dépôt de l'API Java](https://github.com/farahbouh/Forgetonhistoire) · [Installation](#mise-en-place) · [Fonctionnalités prévues](#fonctionnalités-prévues) · [Signaler un bug](../../issues)
 
 </div>
 
@@ -45,7 +45,6 @@ Le projet est réparti sur deux dépôts :
 ---
 
 ## Fonctionnalités disponibles
-
 ### Livres
 
 - [x] Créer un livre (titre obligatoire, type, description)
@@ -56,6 +55,7 @@ Le projet est réparti sur deux dépôts :
 
 - [x] Afficher les univers d'un livre
 - [x] Créer un univers (nom obligatoire, type)
+- [x] Supprimer un univers avec confirmation
 
 ### Personnages
 
@@ -76,13 +76,18 @@ La logique de cohérence est géré par l'[API Java](https://github.com/farahbou
 - [x] **Correction facilitée** : la mise en évidence disparaît dès que l'on modifie un champ
 - [x] **Statut à une année donnée** : pour chaque personnage, saisir une année et voir s'il n'est pas encore né, est vivant, ou est mort (avec l'âge au décès quand on teste l'année exacte du décès)
 
+**Confort d'usage**
+
+- [x] Découper l'interface en composants plus petits (livres, univers, personnages)
+
 ---
 
-## Fonctionnalité en cours
-### Prévu
+## Fonctionnalités prévues
+
 **Gestion du contenu existant**
 
-- [ ] Modifier et supprimer un livre ou un univers
+- [ ] Modifier un univers
+- [ ] Modifier et supprimer un livre
 
 **Lieux**
 
@@ -105,13 +110,13 @@ La logique de cohérence est géré par l'[API Java](https://github.com/farahbou
 
 **Confort d'usage**
 
-- [ ] Découper l'interface en composants plus petits (livres, univers, personnages)
 - [ ] Adapter l'affichage aux écrans de téléphone
 - [ ] Rechercher un personnage, un lieu ou un événement dans un livre
 
 **À plus long terme**
 
 - [ ] Déploiement en ligne pour que d'autres personnes puissent utiliser l'outil
+
 ---
 
 ## Mise en place
